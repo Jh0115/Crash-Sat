@@ -408,7 +408,7 @@
     (in_bom yes) (on_board yes)
     (uuid 346942ff-936b-48fb-b27d-a3ef9d468db9)
     (property "Reference" "R?" (id 0) (at 93.98 57.15 90))
-    (property "Value" "0 Ohms" (id 1) (at 93.98 62.23 90))
+    (property "Value" "R" (id 1) (at 93.98 62.23 90))
     (property "Footprint" "" (id 2) (at 93.98 61.468 90)
       (effects (font (size 1.27 1.27)) hide)
     )
@@ -614,7 +614,7 @@
       (reference "C?") (unit 1) (value "C_Polarized_US") (footprint "")
     )
     (path "/346942ff-936b-48fb-b27d-a3ef9d468db9"
-      (reference "R?") (unit 1) (value "0 Ohms") (footprint "")
+      (reference "R?") (unit 1) (value "R") (footprint "")
     )
     (path "/a94c7477-cec5-434b-b98a-b9f589a8e6c5"
       (reference "R?") (unit 1) (value "R") (footprint "")
