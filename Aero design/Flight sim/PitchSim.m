@@ -33,7 +33,7 @@ dt = 0.01;
 t_end = 50;
 t = 0:dt:t_end;
 
-%% Step 1.5: dummy check ALL of the initial conditions to correct for stupid inputs and edge cases
+%% Step 1.5: dummy check the initial conditions to correct for stupid inputs and edge cases
 s0 = [0,0,-h]; %initial position in coordinate frame North, East, Down
 if v0<=0
   warning('Initial velocity cannot be set to zero or negative, defaulting to 1 m/s')
@@ -62,21 +62,56 @@ pBy_arr(:,1) = pBy0;
 
 %% Step 2: Primary loop (save true data, sourced from rungekutta method here
 for ii = 1:numel(t)-1
+
 %% Step 3: Secondary loop (run this 4 times each iteration to get runge-kutta coefficients
+
+%% Step 3.1: Using current orientation, calculate flight coefficients
+
+%% Step 3.2: Using height determine air desity and wind gusts
+
   for jj = 1:4
-    %% Step 1: Using current orientation, calculate flight coefficients
 
-    %% Step 2: Using height determine air desity and wind gusts
+    %% Step 3.3: Using density, velocity, and orientation, calculate stability frame forces
 
-    %% Step 3: Using density, velocity, and orientation, calculate body frame forces
+    %wind will slightly change the stability frame conversion quaternion and the velocity magnitude
+    vel_wind = [5;1;0]; %this needs to change to a table lookup later
 
-    %% Step 4: Using current orientation, calculate gravity forces in body frame
+    vel_vec_nav = v_arr*pvN; %The nav frame velocity vector is the velocity magnitude times the nav frame unit vector
 
-    %% Step 5: Using aerodynamic forces, control surfaces, velocity, and orientations, calculate moments in body frame
 
-    %% Step 6: Using inertia matrix and moments, calculate angular velocity for next iteration
+    v_base = v_arr(ii);
+    w_base = w_arr(ii);
+    if jj==1
+      %velocity equals v
+      v = v_base;
+      w = w_base;
+    elseif jj==2
+      %velocity = v+dt*k1/2
+      v = v_base+dt*RK4_coeff(1,1)/2;
+      w = w_base+dt*RK4_coeff(2,1)/2;
+    elseif jj==3
+      %velocity = v+dt*k2/2
+      v = v_base+dt*RK4_coeff(1,2)/2;
+      w = w_base+dt*RK4_coeff(2,2)/2;
+    else
+      %velocity = v+dt*k3
+      v = v_base+dt*RK4_coeff(1,3);
+      w = w_base+dt*RK4_coeff(2,3);
+    endif
 
-    %% Step 7: Using body frame forces determine velocity vector at next iteration
+    q_inf = rho*v*v/2; %dynamic pressure
+
+    L_stability = q_inf*Sa_top*Cl; %lift magnitude (stability Z axis)
+    D_stability = q_inf*Sa_front*Cd; %drag magnitude (negative stability X axis)
+    S_stability = q_inf*Sa_side*Cs; %sideforce magnitude (negative stability Y axis)
+
+    %% Step 3.4: Using current orientation, calculate gravity forces in stability frame
+
+    %% Step 3.5: Using aerodynamic forces, control surfaces, velocity, and orientations, calculate moments in stability frame
+
+    %% Step 3.6: Using inertia matrix and moments, calculate angular velocity for next iteration
+
+    %% Step 3.7: Using body frame forces determine velocity vector at next iteration
     kv = ;
     kw = ;
 
@@ -86,6 +121,9 @@ for ii = 1:numel(t)-1
   % calculate velocity and angular velocity using runge kutta coefficients
   v_new = v_arr(ii)+(dt/6)*(RK4_coeff(1,1)+2*RK4_coeff(1,2)+2*RK4_coeff(1,3)+RK4_coeff(1,4));
   w_new = w_arr(ii)+(dt/6)*(RK4_coeff(2,1)+2*RK4_coeff(2,2)+2*RK4_coeff(2,3)+RK4_coeff(2,4));
+
+  % update POSE using velocities
+
 
 %% Step 4: Updating data arrays
   v_arr(ii+1) = v_new;
