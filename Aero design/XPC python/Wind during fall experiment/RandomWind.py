@@ -5,6 +5,7 @@ import pandas as pd
 import math
 import time
 
+print("Control experiment")
 ##============================================================
 client = xpc.XPlaneConnect()
         
@@ -74,13 +75,14 @@ for x in range(15):
 
         df.loc[len(df.index)] = [alt,spd]
 
-        print(df)
-
         time.sleep(0.05)
 
     #pause the simulation, save the csv
     client.pauseSim(True)
     df.to_csv(filename,index=False)
+
+    drag = client.getDREF("sim/flightmodel/forces/faxil_aero")
+    print(str(alt),str(spd),str(drag))
 
 
 

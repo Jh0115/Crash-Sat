@@ -239,7 +239,8 @@ def fly2waypoint(lat_tar,long_tar,alt_tar,speed,lat_tol,long_tol,alt_tol):
 ## Start the script
 
 # Step 1: define waypoints
-pt1 = [27.755997, -82.408641,400]
+pt1 = [34.714546, -86.705016,600]
+pt2 = [34.740385, -86.666375,400]
 
 # Step 2: takeoff
 
@@ -254,6 +255,15 @@ with xpc.XPlaneConnect() as client:
 
     print('Heading attained')
     fly2waypoint(pt1[0],pt1[1],pt1[2],200,0.001,0.001,50)
+
+    pose = client.getPOSI()
+    beta = get_bearing(pose[0],pose[1],pt2[0],pt2[1])
+    print('New heading')
+
+    changeHeading(beta,0.5)
+
+    print('Heading attained')
+    fly2waypoint(pt2[0],pt2[1],pt2[2],200,0.001,0.001,50)
 
     client.pauseSim(True)
 
