@@ -4,7 +4,7 @@ close all
 clc
 
 %define inputs and equation
-f = @(x,y) x+y+0.1;%x.*y.*y+6*x-y.*sqrt(x);
+f = @(x,y) x.^4+y.^4+0.1;%x.*y.*y+6*x-y.*sqrt(x);
 %umag2 = @(x,y) (y.*y./x./x./x/16)+(8*y.*y)+(-4*y./sqrt(x))+(1/2./x)+(4*x.*x);
 
 p = [0,0];
@@ -32,6 +32,7 @@ y_arr = y1:dy:y2;
 %surf(xx,yy,dzz)
 
 %step 2, Do the partial derivatives vector for all points
+n = 1;
 for ii = 2:(numel(x_arr)-1)
   for jj = 2:(numel(y_arr)-1)
     %dxdx
@@ -61,14 +62,28 @@ for ii = 2:(numel(x_arr)-1)
     dydx_mat(ii-1,jj-1) = dydx;
     dydy_mat(ii-1,jj-1) = dydy;
 
+    u_mag_mat = [dxdx,dxdy;dydx,dydy];
+    [V,L] = eig(u_mag_mat);
+
+    eig_mag(jj-1,ii-1) = (max(abs(L(:,1)))).^2+(max(abs(L(:,1)))).^2;
+    n = n+1;
+
     u_mag(jj-1,ii-1) = abs(dxdx)^2+abs(dxdy)^2+abs(dydx)^2+abs(dydy)^2;
 
   endfor
 endfor
 
+
+
+%u_mag_mat = [dxdx_mat,dxdy_mat;
+%               dydx_mat,dydy_mat];
+
+sum(eig_mag)
+
 hold on
 [xxx,yyy] = meshgrid(x_arr(2:end-1),y_arr(2:end-1));
 surf(xxx,yyy,u_mag)
+surf(xxx,yyy,(eig_mag))
 
 for ii = 1:(numel(x_arr)-2)
   %integrate over the Y axis before the x axis
