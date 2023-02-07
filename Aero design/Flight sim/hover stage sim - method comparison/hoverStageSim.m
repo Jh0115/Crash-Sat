@@ -15,7 +15,7 @@ t_update = 2; %Seconds
 rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 
-dt = 0.01;
+dt = 0.1;
 t_end = 100;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
