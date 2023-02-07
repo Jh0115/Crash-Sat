@@ -6,16 +6,16 @@ clc
 
 %initial condition
 vy0 = 0; %initial m/s
-vx0 = 20;
+vx0 = 0.001;
 h0 = 20; %initial meters
-th0 = deg2rad(5); %initial orientation
-aoa0 = deg2rad(5); %initial angle of attack
+th0 = deg2rad(-90); %initial orientation
+aoa0 = deg2rad(0); %initial angle of attack
 w0 = deg2rad(0); %initial angular velocity
 t_update = 2; %Seconds
 rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 
-dt = 0.025;
+dt = 0.001;
 t_end = 100;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
@@ -89,6 +89,8 @@ for ii = 1:numel(t)-1
   u = [elev;
        1];
 
+  %=============================================================================
+  %% RK4 method k1
   %calculate the coefficients of flight given the current angle of attack
   Cl = ac_struct.dClda(alpha_ind,vel_ind)*x(6)+ac_struct.Cl0(alpha_ind,vel_ind);
   [cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
@@ -114,7 +116,7 @@ for ii = 1:numel(t)-1
 
   %knowing the forces and moments calculate the accelerations
   ax = (Dx+Lx)/ac_struct.m;
-  ay = (Dy+Ly)/ac_struct.m;
+  ay = ((Dy+Ly)/ac_struct.m)-9.81;
   ang_accel = (M)/ac_struct.MOI_y;
 
   %using the accelerations determine the state at the next instance
@@ -140,6 +142,7 @@ for ii = 1:numel(t)-1
   if (abs(x(6)))>pi
     x(6) = correctAnglePi(x(6));
   endif
+  %=============================================================================
 
   %update the history arrays
   h(ii+1) = x(1);
@@ -154,6 +157,6 @@ endfor
 
 %after running the simulation plot the data
 figure()
-plot(t,v(1,:))
+plot(t,v(2,:))
 
 
