@@ -24,11 +24,11 @@ function ac_struct = initializeDesign()
 
   %lookup tables
   ac_struct.Cl = xlsread('lookupTableCl.xlsx');
-  ac_struct.Cm = xlsread('lookupTableCm.xlsx');
+  %ac_struct.Cm = xlsread('lookupTableCm.xlsx');
   %ac_struct.dClda = xlsread('lookupTabledClda.xlsx');
-  %ac_struct.dCmda = xlsread('lookupTabledCmda.xlsx');
+  ac_struct.dCmda = xlsread('lookupTabledCmda.xlsx');
   %ac_struct.Cl0 = xlsread('lookupTableCl0.xlsx');
-  %ac_struct.Cm0 = xlsread('lookupTableCm0.xlsx');
+  ac_struct.Cm0 = xlsread('lookupTableCm0.xlsx');
 
   [cf_lam,cf_turb] = coeff_friction(vel,ac_struct.c,rho,mu);
   ac_struct.Cd = cf_lam+cf_turb+(ac_struct.Cl.*ac_struct.Cl./(pi*ac_struct.AR*ac_struct.oe));

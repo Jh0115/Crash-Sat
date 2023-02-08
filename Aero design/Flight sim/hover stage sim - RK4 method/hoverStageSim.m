@@ -6,7 +6,7 @@ clc
 
 %initial condition
 vy0 = 0; %initial m/s
-vx0 = 30;
+vx0 = 3;
 h0 = 20; %initial meters
 th0 = deg2rad(0); %initial orientation
 aoa0 = deg2rad(0); %initial angle of attack
@@ -15,8 +15,8 @@ t_update = 2; %Seconds
 rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 
-dt = 0.0001;
-t_end = 35;
+dt = 0.001;
+t_end = 30;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -96,7 +96,7 @@ for ii = 1:numel(t)-1
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cm = ac_struct.Cm(alpha_ind,vel_ind); %ac_struct.dCmda(alpha_ind,vel_ind)*x(6)+ac_struct.Cm0(alpha_ind,vel_ind);
+  Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
@@ -147,7 +147,7 @@ for ii = 1:numel(t)-1
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cm = ac_struct.Cm(alpha_ind,vel_ind); %ac_struct.dCmda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cm0(alpha_ind,vel_ind);
+  Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
@@ -198,7 +198,7 @@ for ii = 1:numel(t)-1
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cm = ac_struct.Cm(alpha_ind,vel_ind); %ac_struct.dCmda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cm0(alpha_ind,vel_ind);
+  Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
@@ -249,7 +249,7 @@ for ii = 1:numel(t)-1
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cm = ac_struct.Cm(alpha_ind,vel_ind); %ac_struct.dCmda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cm0(alpha_ind,vel_ind);
+  Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
@@ -282,11 +282,11 @@ for ii = 1:numel(t)-1
   %=============================================================================
 
   %using the RK4 coefficients determine the state at the next instance
-  x(1) = h(ii)+(k1(1)+k2(1)+k2(1)+k3(1)+k3(1)+k4(1))*dt/6;
+  x(1) = h(ii)  +(k1(1)+k2(1)+k2(1)+k3(1)+k3(1)+k4(1))*dt/6;
   x(2) = v(2,ii)+(k1(2)+k2(2)+k2(2)+k3(2)+k3(2)+k4(2))*dt/6;
   x(3) = v(1,ii)+(k1(3)+k2(3)+k2(3)+k3(3)+k3(3)+k4(3))*dt/6;
-  x(4) = th(ii)+(k1(4)+k2(4)+k2(4)+k3(4)+k3(4)+k4(4))*dt/6;
-  x(5) = w(ii)+(k1(5)+k2(5)+k2(5)+k3(5)+k3(5)+k4(5))*dt/6;
+  x(4) = th(ii) +(k1(4)+k2(4)+k2(4)+k3(4)+k3(4)+k4(4))*dt/6;
+  x(5) = w(ii)  +(k1(5)+k2(5)+k2(5)+k3(5)+k3(5)+k4(5))*dt/6;
 
   phi_new = atan2(x(2),x(3));
 
@@ -295,10 +295,6 @@ for ii = 1:numel(t)-1
   %angle check. correct any angles beyond the 180 degree range
   if (abs(x(4)))>pi
     x(4) = correctAnglePi(x(4));
-  endif
-
-  if (abs(x(5)))>pi
-    x(5) = correctAnglePi(x(5));
   endif
 
   if (abs(x(6)))>pi
@@ -313,12 +309,25 @@ for ii = 1:numel(t)-1
   w(ii+1) = x(5);
   aoa(ii+1) = x(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
-  G(ii+1) = Cd;
+  G(ii+1) = Cm;
+  H(ii+1) = M;
 
 endfor
 
 %after running the simulation plot the data
+G = G/max(abs(G));
+H = H/max(abs(H));
+aoa = aoa/max(abs(aoa));
+w = w/max(abs(w));
+
+figure()
+plot(t,H)
+hold on
+plot(t,G)
+plot(t,aoa)
+plot(t,w)
+
+legend('Moment','Cm','AoA','Ang vel')
+
 figure()
 plot(s,h)
-
-
