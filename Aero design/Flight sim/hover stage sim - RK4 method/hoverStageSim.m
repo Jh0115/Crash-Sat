@@ -6,7 +6,7 @@ clc
 
 %initial condition
 vy0 = 0; %initial m/s
-vx0 = 3;
+vx0 = 15;
 h0 = 20; %initial meters
 th0 = deg2rad(0); %initial orientation
 aoa0 = deg2rad(0); %initial angle of attack
@@ -309,25 +309,36 @@ for ii = 1:numel(t)-1
   w(ii+1) = x(5);
   aoa(ii+1) = x(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
-  G(ii+1) = Cm;
-  H(ii+1) = M;
+
+  G(ii+1) = ang_accel;
+  H(ii+1) = th(ii+1);
+  J(ii+1) = Cm;
+  K(ii+1) = aoa(ii+1);
+  L(ii+1) = phi_new;
 
 endfor
 
 %after running the simulation plot the data
+
+G(1) = G(2);
+H(1) = H(2);
+J(1) = J(2);
+K(1) = K(2);
+L(1) = L(2);
+
 G = G/max(abs(G));
 H = H/max(abs(H));
-aoa = aoa/max(abs(aoa));
-w = w/max(abs(w));
+J = J/max(abs(J));
+K = K/max(abs(K));
+L = L/max(abs(L));
 
 figure()
-plot(t,H)
-hold on
 plot(t,G)
-plot(t,aoa)
-plot(t,w)
+hold on
+plot(t,H)
+plot(t,J)
+plot(t,K)
+plot(t,L)
 
-legend('Moment','Cm','AoA','Ang vel')
-
-figure()
-plot(s,h)
+legend('Ang accel','Theta','Cm','Aoa','Phi')
+grid()
