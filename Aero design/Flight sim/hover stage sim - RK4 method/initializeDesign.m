@@ -12,7 +12,7 @@ function ac_struct = initializeDesign()
 
   ac_struct.m = 400; %total system mass
 
-  ac_struct.MOI_y = 600; %moment of inertia
+  ac_struct.MOI_y = 400; %moment of inertia
 
   %excel files
   pkg load io

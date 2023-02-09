@@ -5,10 +5,10 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = -3.5; %initial m/s
-vx0 = 10;
+vy0 = -5; %initial m/s
+vx0 = 0;
 h0 = 20; %initial meters
-th0 = atan2(vy0,vx0);%deg2rad(); %initial orientation
+th0 = deg2rad(-80);%deg2rad(); %initial orientation
 aoa0 = deg2rad(0); %initial angle of attack
 w0 = deg2rad(0); %initial angular velocity
 t_update = 2; %Seconds
@@ -16,7 +16,7 @@ rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 
 dt = 0.01;
-t_end = 100;
+t_end = 200;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -93,9 +93,9 @@ for ii = 1:numel(t)-1
   %% RK4 method k1
   %calculate the coefficients of flight given the current angle of attack
   Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x(6)+ac_struct.Cl0(alpha_ind,vel_ind);
-  %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
+  [cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  Cd = cf_lam+cf_turb+ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
@@ -319,11 +319,11 @@ for ii = 1:numel(t)-1
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
   G(ii+1) = ang_accel;
-  H(ii+1) = th(ii+1);
+  H(ii+1) = spd;
   J(ii+1) = w(ii+1);
   K(ii+1) = aoa(ii+1);
-  L(ii+1) = phi_new;
-  N(ii+1) = spd;
+  L(ii+1) = Cl;
+  N(ii+1) = Cd;
 
 endfor
 
@@ -333,18 +333,20 @@ endfor
 ##plot(t,rad2deg(L))
 ##grid()
 
-##rr = 12000;
-##G(1) = G(2);
-##H(1) = H(2);
-##J(1) = J(2);
-##K(1) = K(2);
-##L(1) = L(2);
-##
-##G = G/max(abs(G));
-##H = H/max(abs(H));
-##J = J/max(abs(J));
-##K = K/max(abs(K));
-##L = L/max(abs(L));
+rr = 10000;
+G(1) = G(2);
+H(1) = H(2);
+J(1) = J(2);
+K(1) = K(2);
+L(1) = L(2);
+N(1) = N(2);
+
+G = G/max(abs(G));
+H = H/max(abs(H));
+J = J/max(abs(J));
+K = K/max(abs(K));
+L = L/max(abs(L));
+N = N/max(abs(N));
 
 ##figure()
 ##plot(aoa((end-rr):end),G((end-rr):end))
@@ -352,25 +354,23 @@ endfor
 ##plot(aoa((end-rr):end),H((end-rr):end))
 ##plot(aoa((end-rr):end),J((end-rr):end))
 ##plot(aoa((end-rr):end),K((end-rr):end))
-##plot(aoa((end-rr):end),L((end-rr):end))
+%plot(aoa((end-rr):end),L((end-rr):end))
 ##
-##legend('Ang accel','Theta','W','Aoa','Phi')
-##grid()
-
-##figure()
-##plot(t((end-rr):end),G((end-rr):end))
-##hold on
-##plot(t((end-rr):end),H((end-rr):end))
-##plot(t((end-rr):end),J((end-rr):end))
-##plot(t((end-rr):end),K((end-rr):end))
-##plot(t((end-rr):end),L((end-rr):end))
-##
-##legend('Ang accel','Theta','W','Aoa','Phi')
+##legend('Ang accel','Theta','W','Aoa')
 ##grid()
 
 figure()
-plot(t,rad2deg(w))
+plot(t,G)
+hold on
+plot(t,H)
+plot(t,J)
+plot(t,K)
+plot(t,L)
+plot(t,N)
+
+legend('Ang accel','Speed','W','Aoa','C_l_i_f_t','C_d_r_a_g')
 grid()
+
 
 figure()
 plot(s,h)
