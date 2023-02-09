@@ -5,10 +5,10 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = -5; %initial m/s
-vx0 = 0;
+vy0 = 0; %initial m/s
+vx0 = 30;
 h0 = 20; %initial meters
-th0 = deg2rad(-80);%deg2rad(); %initial orientation
+th0 = deg2rad(0);%deg2rad(); %initial orientation
 aoa0 = deg2rad(0); %initial angle of attack
 w0 = deg2rad(0); %initial angular velocity
 t_update = 2; %Seconds
@@ -16,7 +16,7 @@ rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 
 dt = 0.01;
-t_end = 200;
+t_end = 300;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -92,10 +92,12 @@ for ii = 1:numel(t)-1
   %=============================================================================
   %% RK4 method k1
   %calculate the coefficients of flight given the current angle of attack
-  Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x(6),spd);
   [cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = cf_lam+cf_turb+ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x(6),spd);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
@@ -145,10 +147,12 @@ for ii = 1:numel(t)-1
   alpha_ind = findClosest1D(LT_alpha_ref,x_k1(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
 
-  Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k1(6),spd);
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k1(6),spd);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
@@ -198,10 +202,12 @@ for ii = 1:numel(t)-1
   alpha_ind = findClosest1D(LT_alpha_ref,x_k2(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
 
-  Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k2(6),spd);
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k2(6),spd);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
@@ -251,10 +257,12 @@ for ii = 1:numel(t)-1
   alpha_ind = findClosest1D(LT_alpha_ref,x_k3(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
 
-  Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cl0(alpha_ind,vel_ind);
+  Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k3(6),spd);
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cd0(alpha_ind,vel_ind);
   Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k3(6),spd);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
