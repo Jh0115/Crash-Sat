@@ -5,18 +5,18 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = 0; %initial m/s
-vx0 = 15;
+vy0 = -3.5; %initial m/s
+vx0 = 10;
 h0 = 20; %initial meters
-th0 = deg2rad(0); %initial orientation
+th0 = atan2(vy0,vx0);%deg2rad(); %initial orientation
 aoa0 = deg2rad(0); %initial angle of attack
 w0 = deg2rad(0); %initial angular velocity
 t_update = 2; %Seconds
 rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 
-dt = 0.001;
-t_end = 30;
+dt = 0.01;
+t_end = 100;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -133,9 +133,11 @@ for ii = 1:numel(t)-1
           (x(5)+dt*k1(5)/2);
           0];
 
-  AoA_k1 = x_k1(4)-atan2(x_k1(2),x_k1(3));
+  %AoA_k1 = x_k1(4)-atan2(x_k1(2),x_k1(3));
+  O = [cos(x_k1(4)),sin(x_k1(4))];
+  V = [x_k1(3),x_k1(2)];
 
-  x_k1(6) = AoA_k1;
+  x_k1(6) = calculateAOA(O,V); %AoA_k1;
 
   %% RK4 method k2
 
@@ -184,9 +186,11 @@ for ii = 1:numel(t)-1
           (x(5)+dt*k2(5)/2);
           0];
 
-  AoA_k2 = x_k2(4)-atan2(x_k2(2),x_k2(3));
+  %AoA_k2 = x_k2(4)-atan2(x_k2(2),x_k2(3));
+  O = [cos(x_k2(4)),sin(x_k2(4))];
+  V = [x_k2(3),x_k2(2)];
 
-  x_k2(6) = AoA_k2;
+  x_k2(6) = calculateAOA(O,V); %AoA_k2;
 
   %% RK4 method k3
 
@@ -235,9 +239,11 @@ for ii = 1:numel(t)-1
           (x(5)+dt*k3(5));
           0];
 
-  AoA_k3 = x_k3(4)-atan2(x_k3(2),x_k3(3));
+  %AoA_k3 = x_k3(4)-atan2(x_k3(2),x_k3(3));
+  O = [cos(x_k3(4)),sin(x_k3(4))];
+  V = [x_k3(3),x_k3(2)];
 
-  x_k3(6) = AoA_k3;
+  x_k3(6) = calculateAOA(O,V); %AoA_k3;
 
   %% RK4 method k4
 
@@ -289,17 +295,19 @@ for ii = 1:numel(t)-1
   x(5) = w(ii)  +(k1(5)+k2(5)+k2(5)+k3(5)+k3(5)+k4(5))*dt/6;
 
   phi_new = atan2(x(2),x(3));
+  O = [cos(x(4)),sin(x(4))];
+  V = [x(3),x(2)];
 
-  x(6) = th(ii)-phi_new;
+  x(6) = calculateAOA(O,V);%th(ii)-phi_new;
 
   %angle check. correct any angles beyond the 180 degree range
-  if (abs(x(4)))>pi
-    x(4) = correctAnglePi(x(4));
-  endif
+##  if (abs(x(4)))>pi
+##    x(4) = correctAnglePi(x(4));
+##  endif
 
-  if (abs(x(6)))>pi
-    x(6) = correctAnglePi(x(6));
-  endif
+##  if (abs(x(6)))>pi
+##    x(6) = correctAnglePi(x(6));
+##  endif
 
   %update the history arrays
   h(ii+1) = x(1);
@@ -312,33 +320,57 @@ for ii = 1:numel(t)-1
 
   G(ii+1) = ang_accel;
   H(ii+1) = th(ii+1);
-  J(ii+1) = Cm;
+  J(ii+1) = w(ii+1);
   K(ii+1) = aoa(ii+1);
   L(ii+1) = phi_new;
+  N(ii+1) = spd;
 
 endfor
 
 %after running the simulation plot the data
 
-G(1) = G(2);
-H(1) = H(2);
-J(1) = J(2);
-K(1) = K(2);
-L(1) = L(2);
+##figure()
+##plot(t,rad2deg(L))
+##grid()
 
-G = G/max(abs(G));
-H = H/max(abs(H));
-J = J/max(abs(J));
-K = K/max(abs(K));
-L = L/max(abs(L));
+##rr = 12000;
+##G(1) = G(2);
+##H(1) = H(2);
+##J(1) = J(2);
+##K(1) = K(2);
+##L(1) = L(2);
+##
+##G = G/max(abs(G));
+##H = H/max(abs(H));
+##J = J/max(abs(J));
+##K = K/max(abs(K));
+##L = L/max(abs(L));
+
+##figure()
+##plot(aoa((end-rr):end),G((end-rr):end))
+##hold on
+##plot(aoa((end-rr):end),H((end-rr):end))
+##plot(aoa((end-rr):end),J((end-rr):end))
+##plot(aoa((end-rr):end),K((end-rr):end))
+##plot(aoa((end-rr):end),L((end-rr):end))
+##
+##legend('Ang accel','Theta','W','Aoa','Phi')
+##grid()
+
+##figure()
+##plot(t((end-rr):end),G((end-rr):end))
+##hold on
+##plot(t((end-rr):end),H((end-rr):end))
+##plot(t((end-rr):end),J((end-rr):end))
+##plot(t((end-rr):end),K((end-rr):end))
+##plot(t((end-rr):end),L((end-rr):end))
+##
+##legend('Ang accel','Theta','W','Aoa','Phi')
+##grid()
 
 figure()
-plot(t,G)
-hold on
-plot(t,H)
-plot(t,J)
-plot(t,K)
-plot(t,L)
-
-legend('Ang accel','Theta','Cm','Aoa','Phi')
+plot(t,rad2deg(w))
 grid()
+
+figure()
+plot(s,h)
