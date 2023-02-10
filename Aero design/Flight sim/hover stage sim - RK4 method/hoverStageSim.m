@@ -5,8 +5,8 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = 50; %initial m/s
-vx0 = 20;
+vy0 = 0; %initial m/s
+vx0 = 100;
 h0 = 20; %initial meters
 th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
@@ -15,7 +15,7 @@ rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
-dt = 0.0025;
+dt = 0.01;
 t_end = 60;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
@@ -98,11 +98,8 @@ for ii = 1:numel(t)-1
   %=============================================================================
   %% RK4 method k1
   %calculate the coefficients of flight given the current angle of attack
-  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x(6)+ac_struct.Cl0(alpha_ind,vel_ind);
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x(6),spd);
   [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
-  %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  %Cd = cf_lam+cf_turb+ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
   Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x(6),spd);
   Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x(6)+ac_struct.Cm0(alpha_ind,vel_ind);
@@ -117,7 +114,7 @@ for ii = 1:numel(t)-1
 
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
   FL = q_inf*Cl*ac_struct.Sa; %magnitude of lift force in newtons
-  FD = FD_fric+FD_press+FD_induced; %q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
+  FD = FD_fric+FD_press+FD_induced; %magnitude of drag force in newtons
 
   phi = x(4)-x(6); %the velocity vector angle
 
@@ -153,7 +150,6 @@ for ii = 1:numel(t)-1
           (x(5)+dt*k1(5)/2);
           0];
 
-  %AoA_k1 = x_k1(4)-atan2(x_k1(2),x_k1(3));
   O = [cos(x_k1(4)),sin(x_k1(4))];
   V = [x_k1(3),x_k1(2)];
 
@@ -165,11 +161,7 @@ for ii = 1:numel(t)-1
   alpha_ind = findClosest1D(LT_alpha_ref,x_k1(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
 
-  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cl0(alpha_ind,vel_ind);
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k1(6),spd);
-  %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
-  %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  %Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
   [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
   Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k1(6),spd);
   Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
@@ -233,11 +225,7 @@ for ii = 1:numel(t)-1
   alpha_ind = findClosest1D(LT_alpha_ref,x_k2(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
 
-  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cl0(alpha_ind,vel_ind);
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k2(6),spd);
-  %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
-  %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  %Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
   [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
   Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k2(6),spd);
   Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
@@ -301,11 +289,7 @@ for ii = 1:numel(t)-1
   alpha_ind = findClosest1D(LT_alpha_ref,x_k3(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
 
-  %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cl0(alpha_ind,vel_ind);
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k3(6),spd);
-  %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
-  %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  %Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
   [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
 
   Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k3(6),spd);
@@ -366,15 +350,6 @@ for ii = 1:numel(t)-1
 
   x(6) = calculateAOA(O,V);
 
-  %angle check. correct any angles beyond the 180 degree range
-##  if (abs(x(4)))>pi
-##    x(4) = correctAnglePi(x(4));
-##  endif
-
-##  if (abs(x(6)))>pi
-##    x(6) = correctAnglePi(x(6));
-##  endif
-
   %update the history arrays
   h(ii+1) = x(1);
   v(1,ii+1) = x(3);
@@ -390,8 +365,6 @@ for ii = 1:numel(t)-1
   K(ii+1) = spd;
   L(ii+1) = h(ii+1);
   N(ii+1) = Cm;
-
-
 
 endfor
 
