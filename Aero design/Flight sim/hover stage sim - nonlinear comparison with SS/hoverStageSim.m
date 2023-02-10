@@ -16,7 +16,7 @@ mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
 dt = 0.1;
-t_end = 60;
+t_end = 5;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -363,6 +363,7 @@ endfor
 
 figure()
 plot(s,h)
+hold on
 
 
 %% state space model
@@ -449,8 +450,40 @@ for ii = 1:numel(t)-1
          0,f0_alpha;
          0,f0_daoa]; %input matrix (elevator and bias as columns)
 
-    t_last_update = t(ii)
+    t_last_update = t(ii);
 
   endif
+  %determine inputs
+  elev = 0;
+  u = [elev;
+       1];
+
+  %determine d-state
+  k1 = A*x+B*u; %k1
+
+  x_2 = x+dt*k1/2;
+  k2 = A*x_2+B*u; %k2
+
+  x_3 = x+dt*k2/2;
+  k3 = A*x_3+B*u; %k3
+
+  x_4 = x+dt*k3;
+  k4 = A*x_4+B*u; %k4
+
+  x_new = x+(k1+k2+k2+k3+k3+k4)*dt/6;
+
+  %update history arrays
+  h(ii+1) = x_new(1);
+  v(1,ii+1) = x_new(3);
+  v(2,ii+1) = x_new(2);
+  th(ii+1) = x_new(4);
+  w(ii+1) = x_new(5);
+  aoa(ii+1) = x_new(6);
+  s(ii+1) = s(ii)+v(1,ii)*dt;
+
+  x = x_new
+
 endfor
 
+plot(s,h)
+legend('Nonlinear','State-Space')
