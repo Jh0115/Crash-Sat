@@ -6,9 +6,12 @@ function ac_struct = initializeDesign()
   mu = 0.0000181;
 
   ac_struct.Sa = 17.95; %surface area in m^2
+  ac_struct.Sa_front = 4;
+  ac_struct.Sa_top = 25;
+  
   ac_struct.c = 1.056; %mean chord
   ac_struct.AR = ac_struct.Sa/ac_struct.c/ac_struct.c; %wing aspect ratio
-  ac_struct.oe = 0.7; %oswald efficiency factor THIS CAN BE APPROXIMATED THROUGH ASPECT RATIO BUT IM LEAVING IT THIS SIMPLE FOR NOW
+  ac_struct.oe = 0.4; %oswald efficiency factor THIS CAN BE APPROXIMATED THROUGH ASPECT RATIO BUT IM LEAVING IT THIS SIMPLE FOR NOW
 
   ac_struct.m = 400; %total system mass
 
@@ -30,8 +33,8 @@ function ac_struct = initializeDesign()
   %ac_struct.Cl0 = xlsread('lookupTableCl0.xlsx');
   ac_struct.Cm0 = xlsread('lookupTableCm0.xlsx');
 
-  [cf_lam,cf_turb] = coeff_friction(vel,ac_struct.c,rho,mu);
-  ac_struct.Cd = cf_lam+cf_turb+(ac_struct.Cl.*ac_struct.Cl./(pi*ac_struct.AR*ac_struct.oe));
+  %[cf_lam,cf_turb] = coeff_friction(vel,ac_struct.c,rho,mu);
+  ac_struct.Cd = xlsread('lookupTableCd.xlsx'); %cf_lam+cf_turb+(ac_struct.Cl.*ac_struct.Cl./(pi*ac_struct.AR*ac_struct.oe));
 
   %ac_struct.dCdda = xlsread('lookupTabledCdda.xlsx');
   %ac_struct.Cd0 = xlsread('lookupTableCd0.xlsx');

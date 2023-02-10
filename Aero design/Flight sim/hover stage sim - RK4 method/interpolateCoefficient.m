@@ -3,7 +3,7 @@ function coeff_3 = interpolateCoefficient(ac_struct,coeff_mat,alpha_ind,vel_ind,
   %step 1: load relevant values, nearest alpha, nearest vel
   LT_alpha_ref = ac_struct.alpha; %reference for alpha values of lookup tables
   LT_vel_ref = ac_struct.vel; %reference for vel values of lookup tables
-
+  
   alpha_base = LT_alpha_ref(alpha_ind);
   vel_base = LT_vel_ref(vel_ind);
 
@@ -43,7 +43,7 @@ function coeff_3 = interpolateCoefficient(ac_struct,coeff_mat,alpha_ind,vel_ind,
 
   %step 3: interpolate along the alpha_base and alpha_2 axes to narrow down the interpolation problem
   %get C_int_1, and C_int_2
-  C_int_1 = interExterpolate(alpha_base,coeff_mat(alpha_ind,vel_ind),alpha_2,coeff_mat(alpha_ind_2,vel_ind_2),alpha);
+  C_int_1 = interExterpolate(alpha_base,coeff_mat(alpha_ind,vel_ind),alpha_2,coeff_mat(alpha_ind_2,vel_ind),alpha);
   C_int_2 = interExterpolate(alpha_base,coeff_mat(alpha_ind,vel_ind_2),alpha_2,coeff_mat(alpha_ind_2,vel_ind_2),alpha);
 
   coeff_3 = interExterpolate(vel_base,C_int_1,vel_2,C_int_2,vel);

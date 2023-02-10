@@ -5,6 +5,8 @@ using a structure like this as standard going forward makes inputting engineerin
 
 first layer:
 Sa - top view planform surface area of main wings (does not include imponage or fuselage, but does include the imaginary surface area of the wings inside the fuselage
+Sa_top - top view planform area of entire aircraft
+Sa_front - front view planform area of entire aircraft
 c - mean chord of the main wing
 oe - Oswald efficiency factor of the wing design
 AR - main wing aspect ratio

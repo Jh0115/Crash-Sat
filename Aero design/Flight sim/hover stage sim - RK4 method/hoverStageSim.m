@@ -5,18 +5,18 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = 0; %initial m/s
-vx0 = 30;
+vy0 = -3; %initial m/s
+vx0 = 25;
 h0 = 20; %initial meters
-th0 = deg2rad(0);%deg2rad(); %initial orientation
-aoa0 = deg2rad(0); %initial angle of attack
+th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
 t_update = 2; %Seconds
 rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
+w_damp = 0.1; %angular velocity dampener constant
 
 dt = 0.01;
-t_end = 300;
+t_end = 100;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -27,7 +27,11 @@ v(2,1) = vy0;
 h(1) = h0;
 w(1) = w0;
 th(1) = th0;
-aoa(1) = aoa0;
+
+
+O = [cos(th0),sin(th0)];
+V = [vx0,vy0];
+aoa(1) = calculateAOA(O,V);
 
 %initialize the design of the vehicle
 ac_struct = initializeDesign();
@@ -40,7 +44,7 @@ x = [h0;
      vx0;
      th0;
      w0;
-     aoa0;];
+     aoa(1)];
 
 %loop
 t_last_update = 0;
@@ -51,6 +55,8 @@ for ii = 1:numel(t)-1
   spd = sqrt(x(2)^2+x(3)^2);
   alpha_ind = findClosest1D(LT_alpha_ref,x(6));
   vel_ind = findClosest1D(LT_vel_ref,spd);
+
+  energy(ii) = ac_struct.m*9.81*x(1)+0.5*ac_struct.m*spd*spd+0.5*ac_struct.MOI_y*x(5)*x(5);
 
   %recalculate taylor series linearizations every t_u seconds
 ##  if t(ii)>(t_last_update+t_update)
@@ -94,16 +100,24 @@ for ii = 1:numel(t)-1
   %calculate the coefficients of flight given the current angle of attack
   %Cl = ac_struct.Cl(alpha_ind,vel_ind); %ac_struct.dClda(alpha_ind,vel_ind)*x(6)+ac_struct.Cl0(alpha_ind,vel_ind);
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x(6),spd);
-  [cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
+  [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  Cd = cf_lam+cf_turb+ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x(6),spd);
+  %Cd = cf_lam+cf_turb+ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x(6),spd);
+  Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
+
+  Sa_actual = abs((ac_struct.Sa_top-ac_struct.Sa_front)*sin(x(6))+ac_struct.Sa_front); %the surface area can vary depending on the angle of attack
+  FD_fric = q_inf*Cf_Sa; %friction drag force
+  FD_press = q_inf*interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x(6),spd)*Sa_actual; %pressure drag force
+  FD_induced = q_inf*Cd_induced*ac_struct.Sa;
+
+  q_inf = 0.5*rho*spd*spd; %dynamic pressure
   FL = q_inf*Cl*ac_struct.Sa; %magnitude of lift force in newtons
-  FD = q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
+  FD = FD_fric+FD_press+FD_induced; %q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
 
   phi = x(4)-x(6); %the velocity vector angle
 
@@ -119,7 +133,11 @@ for ii = 1:numel(t)-1
   %knowing the forces and moments calculate the accelerations
   ax = (Dx+Lx)/ac_struct.m;
   ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_accel = (M)/ac_struct.MOI_y;
+  ang_vel_damp = w_damp*x(5)*x(5);
+  if x(5)>0
+    ang_vel_damp = -ang_vel_damp;
+  endif
+  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
 
   %k1 vector
   k1 = [x(2);
@@ -151,14 +169,23 @@ for ii = 1:numel(t)-1
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k1(6),spd);
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k1(6),spd);
+  %Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
+  Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k1(6),spd);
+  Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k1(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
+
+  Sa_actual = abs((ac_struct.Sa_top-ac_struct.Sa_front)*sin(x_k1(6))+ac_struct.Sa_front); %the surface area can vary depending on the angle of attack
+  FD_fric = q_inf*Cf_Sa; %friction drag force
+  FD_press = q_inf*interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k1(6),spd)*Sa_actual; %pressure drag force
+  FD_induced = q_inf*Cd_induced*ac_struct.Sa;
+
+  q_inf = 0.5*rho*spd*spd; %dynamic pressure
   FL = q_inf*Cl*ac_struct.Sa; %magnitude of lift force in newtons
-  FD = q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
+  FD = FD_fric+FD_press+FD_induced; %q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
 
   phi = x_k1(4)-x_k1(6); %the velocity vector angle
 
@@ -174,7 +201,11 @@ for ii = 1:numel(t)-1
   %knowing the forces and moments calculate the accelerations
   ax = (Dx+Lx)/ac_struct.m;
   ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_accel = (M)/ac_struct.MOI_y;
+  ang_vel_damp = w_damp*x_k1(5)*x_k1(5);
+  if x_k1(5)>0
+    ang_vel_damp = -ang_vel_damp;
+  endif
+  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
 
   %k1 vector
   k2 = [x(2);
@@ -206,14 +237,23 @@ for ii = 1:numel(t)-1
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k2(6),spd);
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k2(6),spd);
+  %Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
+  Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k2(6),spd);
+  Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k2(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
+
+  Sa_actual = abs((ac_struct.Sa_top-ac_struct.Sa_front)*sin(x_k2(6))+ac_struct.Sa_front); %the surface area can vary depending on the angle of attack
+  FD_fric = q_inf*Cf_Sa; %friction drag force
+  FD_press = q_inf*interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k2(6),spd)*Sa_actual; %pressure drag force
+  FD_induced = q_inf*Cd_induced*ac_struct.Sa;
+
+  q_inf = 0.5*rho*spd*spd; %dynamic pressure
   FL = q_inf*Cl*ac_struct.Sa; %magnitude of lift force in newtons
-  FD = q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
+  FD = FD_fric+FD_press+FD_induced; %q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
 
   phi = x_k2(4)-x_k2(6); %the velocity vector angle
 
@@ -229,7 +269,11 @@ for ii = 1:numel(t)-1
   %knowing the forces and moments calculate the accelerations
   ax = (Dx+Lx)/ac_struct.m;
   ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_accel = (M)/ac_struct.MOI_y;
+  ang_vel_damp = w_damp*x_k2(5)*x_k2(5);
+  if x_k2(5)>0
+    ang_vel_damp = -ang_vel_damp;
+  endif
+  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
 
   %k1 vector
   k3 = [x(2);
@@ -261,14 +305,24 @@ for ii = 1:numel(t)-1
   Cl = interpolateCoefficient(ac_struct,ac_struct.Cl,alpha_ind,vel_ind,x_k3(6),spd);
   %[cf_lam,cf_turb] = coeff_friction(spd,ac_struct.c,rho,mu);
   %Cd_profile = ac_struct.dCdda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cd0(alpha_ind,vel_ind);
-  Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
-  Cd = interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k3(6),spd);
+  %Cd = ac_struct.Cd(alpha_ind,vel_ind); %cf_lam+cf_turb+(Cl*Cl/(pi*ac_struct.AR*ac_struct.oe));%cf_lam+cf_turb+Cd_profile;
+  [cf_lam,cf_turb,Cf_Sa] = coeff_friction(spd,ac_struct.c,rho,mu,ac_struct.Sa);
+
+  Cd = cf_lam+cf_turb+interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k3(6),spd);
+  Cd_induced = Cl*Cl/(pi*ac_struct.AR*ac_struct.oe);
   Cm = ac_struct.dCmda(alpha_ind,vel_ind)*x_k3(6)+ac_struct.Cm0(alpha_ind,vel_ind);
 
   %calculate the forces of flight given the coefficients and elevator angle
   q_inf = 0.5*rho*spd*spd; %dynamic pressure
+
+  Sa_actual = abs((ac_struct.Sa_top-ac_struct.Sa_front)*sin(x_k3(6))+ac_struct.Sa_front); %the surface area can vary depending on the angle of attack
+  FD_fric = q_inf*Cf_Sa; %friction drag force
+  FD_press = q_inf*interpolateCoefficient(ac_struct,ac_struct.Cd,alpha_ind,vel_ind,x_k3(6),spd)*Sa_actual; %pressure drag force
+  FD_induced = q_inf*Cd_induced*ac_struct.Sa;
+
+  q_inf = 0.5*rho*spd*spd; %dynamic pressure
   FL = q_inf*Cl*ac_struct.Sa; %magnitude of lift force in newtons
-  FD = q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
+  FD = FD_fric+FD_press+FD_induced; %q_inf*Cd*ac_struct.Sa; %magnitude of drag force in newtons
 
   phi = x_k3(4)-x_k3(6); %the velocity vector angle
 
@@ -284,7 +338,11 @@ for ii = 1:numel(t)-1
   %knowing the forces and moments calculate the accelerations
   ax = (Dx+Lx)/ac_struct.m;
   ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_accel = (M)/ac_struct.MOI_y;
+  ang_vel_damp = w_damp*x_k3(5)*x_k3(5);
+  if x_k3(5)>0
+    ang_vel_damp = -ang_vel_damp;
+  endif
+  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
 
   %k1 vector
   k4 = [x(2);
@@ -306,7 +364,7 @@ for ii = 1:numel(t)-1
   O = [cos(x(4)),sin(x(4))];
   V = [x(3),x(2)];
 
-  x(6) = calculateAOA(O,V);%th(ii)-phi_new;
+  x(6) = calculateAOA(O,V);
 
   %angle check. correct any angles beyond the 180 degree range
 ##  if (abs(x(4)))>pi
@@ -326,20 +384,29 @@ for ii = 1:numel(t)-1
   aoa(ii+1) = x(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
-  G(ii+1) = ang_accel;
-  H(ii+1) = spd;
+  G(ii+1) = aoa(ii+1);
+  H(ii+1) = th(ii+1);
   J(ii+1) = w(ii+1);
-  K(ii+1) = aoa(ii+1);
-  L(ii+1) = Cl;
-  N(ii+1) = Cd;
+  K(ii+1) = ang_accel;
+  L(ii+1) = M;
+  N(ii+1) = Cm;
+
+
 
 endfor
 
 %after running the simulation plot the data
+figure()
+plot(t,G)
+hold on
+plot(t,H)
+plot(t,J)
+plot(t,K)
+plot(t,L)
+plot(t,N)
 
-##figure()
-##plot(t,rad2deg(L))
-##grid()
+legend('AoA','Theta','Ang vel','Ang accel','Moment','Cm')
+grid()
 
 rr = 10000;
 G(1) = G(2);
@@ -376,9 +443,12 @@ plot(t,K)
 plot(t,L)
 plot(t,N)
 
-legend('Ang accel','Speed','W','Aoa','C_l_i_f_t','C_d_r_a_g')
+legend('AoA','Theta','Ang vel','Ang accel','Moment','Cm')
 grid()
 
 
 figure()
 plot(s,h)
+
+figure()
+plot(t(1:end-2),diff(energy))
