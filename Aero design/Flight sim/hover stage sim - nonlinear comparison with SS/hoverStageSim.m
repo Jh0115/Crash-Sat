@@ -6,7 +6,7 @@ clc
 
 %initial condition
 vy0 = 0; %initial m/s
-vx0 = 100;
+vx0 = 50;
 h0 = 20; %initial meters
 th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
@@ -15,7 +15,7 @@ rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
-dt = 0.01;
+dt = 0.1;
 t_end = 60;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
@@ -364,26 +364,93 @@ endfor
 figure()
 plot(s,h)
 
-##    f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
-##
-##    [trash,f0_ay,daydh,daydvy,daydvx,daydth,daydw,dayda] = linearize_ay(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##    [trash,f0_ax,daxdh,daxdvy,daxdvx,daxdth,daxdw,daxda] = linearize_ax(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##
-##    f0_w = x(5); dwdh = 0; dwdvy = 0; dwdvx = 0; dwdth = 0; dwdw = 1; dwda = 0;
-##
-##    [trash,f0_alpha,dalphadh,dalphadvy,dalphadvx,dalphadth,dalphadw,dalphada] = linearize_alpha(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##    [trash,f0_daoa,ddaoadh,ddaoadvy,ddaoadvx,ddaoadth,ddaoadw,ddaoada] = linearize_aoa_dot(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##
-##    A = [dvydh,    dvydvy,    dvydvx,    dvydth,    dvydw,    dvyda;
-##         daydh,    daydvy,    daydvx,    daydth,    daydw,    dayda;
-##         daxdh,    daxdvy,    daxdvx,    daxdth,    daxdw,    daxda;
-##         dwdh,     dwdvy,     dwdvx,     dwdth,     dwdw,     dwda;
-##         dalphadh, dalphadvy, dalphadvx, dalphadth, dalphadw, dalphada;
-##         ddaoadh,  ddaoadvy,  ddaoadvx,  ddaoadth,  ddaoadw,  ddaoada]; %state matrix
-##
-##    B = [0,f0_vy;
-##         0,f0_ay;
-##         0,f0_ax;
-##         0,f0_w;
-##         0,f0_alpha;
-##         0,f0_daoa]; %input matrix (elevator and bias as columns)
+
+%% state space model
+v = zeros(2,numel(t));
+h = zeros(1,numel(t));
+s = zeros(1,numel(t));
+
+v(1,1) = vx0;
+v(2,1) = vy0;
+h(1) = h0;
+w(1) = w0;
+th(1) = th0;
+
+O = [cos(th0),sin(th0)];
+V = [vx0,vy0];
+aoa(1) = calculateAOA(O,V);
+
+%initialize the design of the vehicle
+ac_struct = initializeDesign();
+LT_alpha_ref = ac_struct.alpha; %reference for alpha values of lookup tables
+LT_vel_ref = ac_struct.vel; %reference for vel values of lookup tables
+
+%state vectorize
+x = [h0;
+     vy0;
+     vx0;
+     th0;
+     w0;
+     aoa(1)];
+
+%nonlinear simulation loop
+t_last_update = 0;
+
+%state space definition
+f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
+
+[trash,f0_ay,daydh,daydvy,daydvx,daydth,daydw,dayda] = linearize_ay(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+[trash,f0_ax,daxdh,daxdvy,daxdvx,daxdth,daxdw,daxda] = linearize_ax(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+
+f0_w = x(5); dwdh = 0; dwdvy = 0; dwdvx = 0; dwdth = 0; dwdw = 1; dwda = 0;
+
+[trash,f0_alpha,dalphadh,dalphadvy,dalphadvx,dalphadth,dalphadw,dalphada] = linearize_alpha(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+[trash,f0_daoa,ddaoadh,ddaoadvy,ddaoadvx,ddaoadth,ddaoadw,ddaoada] = linearize_aoa_dot(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+
+A = [dvydh,    dvydvy,    dvydvx,    dvydth,    dvydw,    dvyda;
+     daydh,    daydvy,    daydvx,    daydth,    daydw,    dayda;
+     daxdh,    daxdvy,    daxdvx,    daxdth,    daxdw,    daxda;
+     dwdh,     dwdvy,     dwdvx,     dwdth,     dwdw,     dwda;
+     dalphadh, dalphadvy, dalphadvx, dalphadth, dalphadw, dalphada;
+     ddaoadh,  ddaoadvy,  ddaoadvx,  ddaoadth,  ddaoadw,  ddaoada]; %state matrix
+
+B = [0,f0_vy;
+     0,f0_ay;
+     0,f0_ax;
+     0,f0_w;
+     0,f0_alpha;
+     0,f0_daoa]; %input matrix (elevator and bias as columns)
+
+for ii = 1:numel(t)-1
+  %recalculate taylor series linearizations every t_u seconds
+  if t(ii)>=(t_last_update+t_update)
+    %update the linearizations
+    f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
+
+    [trash,f0_ay,daydh,daydvy,daydvx,daydth,daydw,dayda] = linearize_ay(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+    [trash,f0_ax,daxdh,daxdvy,daxdvx,daxdth,daxdw,daxda] = linearize_ax(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+
+    f0_w = x(5); dwdh = 0; dwdvy = 0; dwdvx = 0; dwdth = 0; dwdw = 1; dwda = 0;
+
+    [trash,f0_alpha,dalphadh,dalphadvy,dalphadvx,dalphadth,dalphadw,dalphada] = linearize_alpha(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+    [trash,f0_daoa,ddaoadh,ddaoadvy,ddaoadvx,ddaoadth,ddaoadw,ddaoada] = linearize_aoa_dot(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+
+    A = [dvydh,    dvydvy,    dvydvx,    dvydth,    dvydw,    dvyda;
+         daydh,    daydvy,    daydvx,    daydth,    daydw,    dayda;
+         daxdh,    daxdvy,    daxdvx,    daxdth,    daxdw,    daxda;
+         dwdh,     dwdvy,     dwdvx,     dwdth,     dwdw,     dwda;
+         dalphadh, dalphadvy, dalphadvx, dalphadth, dalphadw, dalphada;
+         ddaoadh,  ddaoadvy,  ddaoadvx,  ddaoadth,  ddaoadw,  ddaoada]; %state matrix
+
+    B = [0,f0_vy;
+         0,f0_ay;
+         0,f0_ax;
+         0,f0_w;
+         0,f0_alpha;
+         0,f0_daoa]; %input matrix (elevator and bias as columns)
+
+    t_last_update = t(ii)
+
+  endif
+endfor
+
