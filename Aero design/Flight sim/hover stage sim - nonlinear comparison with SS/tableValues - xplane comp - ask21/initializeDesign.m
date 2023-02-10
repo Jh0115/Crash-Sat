@@ -2,12 +2,14 @@
 
 function ac_struct = initializeDesign()
   pkg load io
-  ac_struct.Sa = 0.25; %surface area in m^2
-  ac_struct.c = 0.15; %mean chord
+  ac_struct.Sa = 17.95; %surface area in m^2
+  ac_struct.c = 1.056; %mean chord
+  ac_struct.AR = ac_struct.Sa/ac_struct.c/ac_struct.c; %wing aspect ratio
+  ac_struct.oe = 0.7; %oswald efficiency factor THIS CAN BE APPROXIMATED THROUGH ASPECT RATIO BUT IM LEAVING IT THIS SIMPLE FOR NOW
 
-  ac_struct.m = 10; %total system mass
+  ac_struct.m = 400; %total system mass
 
-  ac_struct.MOI_y = 0.8667; %moment of inertia
+  ac_struct.MOI_y = 600; %moment of inertia
 
   %excel files
   ac_struct.alpha = xlsread('lookupTableAlpha.xlsx');

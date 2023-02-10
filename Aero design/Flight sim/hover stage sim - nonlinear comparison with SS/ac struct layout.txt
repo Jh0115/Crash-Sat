@@ -5,13 +5,21 @@ using a structure like this as standard going forward makes inputting engineerin
 
 first layer:
 Sa - top view planform surface area of main wings (does not include imponage or fuselage, but does include the imaginary surface area of the wings inside the fuselage
+Sa_top - top view planform area of entire aircraft
+Sa_front - front view planform area of entire aircraft
 c - mean chord of the main wing
+oe - Oswald efficiency factor of the wing design
+AR - main wing aspect ratio
 
 m - total mass of the vehicle, including dry, wet, and payload
 m_dry - dry mass of the vehicle with no payload
 m_f - weight of only the fuel, if any
 m_pay1 - weight of payload 1, if any
 m_pay2 - weight of payload 2, if any
+
+Cl - A lookup table consisting of relevant lift coefficiant values
+Cd - A lookup table consisting of relevant drag coefficiant values
+Cm - A lookup table consisting of relevant moment coefficiant values
 
 dClda - A lookup table consisting of various values for the derivative of lift coefficient WRT angle of attack. the first dimension (row index) is the variation with angle of attack, 
 	the 2nd dimension (column index) is the variation with velocity
