@@ -12,11 +12,11 @@ function [cf_lam,cf_turb,cf_times_Sa] = coeff_friction(vel,chord,rho,mu,Sa)
     cf_turb = 0.027./(Re).^(1/7);
   endif
   cf_lam = 0.664./sqrt(Re);
-  
+
   perc_lam = c_transition/chord;
   perc_turb = 1-perc_lam;
-  
-  cf_times_Sa = cf_lam*Sa*perc_lam+cf_turb*Sa*perc_turb;
+
+  cf_times_Sa = (cf_lam*Sa*perc_lam+cf_turb*Sa*perc_turb)*10;
 
 endfunction
 

@@ -5,8 +5,8 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = -3; %initial m/s
-vx0 = 25;
+vy0 = 50; %initial m/s
+vx0 = 20;
 h0 = 20; %initial meters
 th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
@@ -15,8 +15,8 @@ rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
-dt = 0.01;
-t_end = 100;
+dt = 0.0025;
+t_end = 60;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -385,10 +385,10 @@ for ii = 1:numel(t)-1
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
   G(ii+1) = aoa(ii+1);
-  H(ii+1) = th(ii+1);
-  J(ii+1) = w(ii+1);
-  K(ii+1) = ang_accel;
-  L(ii+1) = M;
+  H(ii+1) = FL;
+  J(ii+1) = FD;
+  K(ii+1) = spd;
+  L(ii+1) = h(ii+1);
   N(ii+1) = Cm;
 
 
@@ -405,7 +405,7 @@ plot(t,K)
 plot(t,L)
 plot(t,N)
 
-legend('AoA','Theta','Ang vel','Ang accel','Moment','Cm')
+legend('AoA','Lift force','Drag force','Speed','Height','Cm')
 grid()
 
 rr = 10000;
@@ -443,7 +443,7 @@ plot(t,K)
 plot(t,L)
 plot(t,N)
 
-legend('AoA','Theta','Ang vel','Ang accel','Moment','Cm')
+legend('AoA','Lift force','Drag force','Speed','Height','Cm')
 grid()
 
 
