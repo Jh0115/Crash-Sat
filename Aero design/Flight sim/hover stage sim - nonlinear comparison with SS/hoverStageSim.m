@@ -15,8 +15,8 @@ rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
-dt = 0.1;
-t_end = 5;
+dt = 0.01;
+t_end = 1;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -362,7 +362,7 @@ for ii = 1:numel(t)-1
 endfor
 
 figure()
-plot(s,h)
+plot(t,aoa)
 hold on
 
 
@@ -481,9 +481,9 @@ for ii = 1:numel(t)-1
   aoa(ii+1) = x_new(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
-  x = x_new
+  x = x_new;
 
 endfor
 
-plot(s,h)
+plot(t,aoa)
 legend('Nonlinear','State-Space')
