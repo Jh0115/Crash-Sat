@@ -2,7 +2,7 @@
 % ac_struct - structure object with inherent information of the aircraft (S_a, m, C_l, C_f, etc)
 % h, v, th, w - height, velocity, theta, and omega state values in meters, m/s, radians, and rad/s
 
-function [f,f0,dfdh,dfdvy,dfdvx,dfdth,dfdw,dfda] = linearize_aoa_dot(ac_struct,alpha_ref,vel_ref,h,vy,vx,th,w,a,rho,elev)
+function [f,b,dfdh,dfdvy,dfdvx,dfdth,dfdw,dfda] = linearize_aoa_dot(ac_struct,alpha_ref,vel_ref,h,vy,vx,th,w,a,rho,elev)
   dfdh = 0;
   dfdw = 1;
 
@@ -20,7 +20,9 @@ function [f,f0,dfdh,dfdvy,dfdvx,dfdth,dfdw,dfda] = linearize_aoa_dot(ac_struct,a
 
   f0 = w-(((rho*Sa)/(2*m)).*(vx.*((dClda*a+Cl0).*cos(th-a))-((dCdda*a+Cd0).*sin(th-a))-vy.*((dClda*a+Cl0).*sin(th-a))-((dCdda*a+Cd0).*cos(th-a)))./(vx.^2));
 
-  f = @(h,vy,vx,th,w,a) f0+dfdh*h+dfdv*v+dfdth*th+dfdw*w+dfda*a;
+  b = f0-((dfdh*h)+(dfdvy*vy)+(dfdvx*vx)+(dfdth*th)+(dfdw*w)+(dfda*a));
+
+  f = @(h,vy,vx,th,w,a) b+dfdh.*h+dfdvx.*vx+dfdvy.*vy+dfdth.*th+dfdw.*w+dfda.*a;
 
 end
 

@@ -2,7 +2,7 @@
 % ac_struct - structure object with inherent information of the aircraft (S_a, m, C_l, C_f, etc)
 % h, v, th, w - height, velocity, theta, and omega state values in meters, m/s, radians, and rad/s
 
-function [f,f0,dfdh,dfdvy,dfdvx,dfdth,dfdw,dfda] = linearize_ax(ac_struct,alpha_ref,vel_ref,h,vy,vx,th,w,a,rho,elev)
+function [f,b,dfdh,dfdvy,dfdvx,dfdth,dfdw,dfda] = linearize_ax(ac_struct,alpha_ref,vel_ref,h,vy,vx,th,w,a,rho,elev)
   dfdh = 0;
   dfdw = 0;
   dfdvy = 0;
@@ -20,7 +20,9 @@ function [f,f0,dfdh,dfdvy,dfdvx,dfdth,dfdw,dfda] = linearize_ax(ac_struct,alpha_
 
   f0 = (Sa*rho*vx*vx/2/m)*(-(dClda*a+Cl0)*sin(th-a)-(dCdda*a+Cd0)*cos(th-a));
 
-  f = @(h,vy,vx,th,w,a) f0+dfdh*h+dfdvy*vy+dfdvx*vx+dfdth*th+dfdw*w+dfda*a;
+  b = f0-((dfdh*h)+(dfdvy*vy)+(dfdvx*vx)+(dfdth*th)+(dfdw*w)+(dfda*a));
+
+  f = @(h,vy,vx,th,w,a) b+dfdh.*h+dfdvx.*vx+dfdth.*th+dfdw.*w+dfda.*a;
 
 endfunction
 

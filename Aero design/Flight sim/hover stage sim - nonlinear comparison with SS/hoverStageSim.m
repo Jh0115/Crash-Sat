@@ -10,13 +10,13 @@ vx0 = 50;
 h0 = 20; %initial meters
 th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
-t_update = 2; %Seconds
+t_update = 1; %Seconds
 rho = 1.225; %air density kg/m^3
 mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
 dt = 0.01;
-t_end = 1;
+t_end = 400;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -359,10 +359,13 @@ for ii = 1:numel(t)-1
   aoa(ii+1) = x(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
+  G(ii) = spd;
+
 endfor
 
 figure()
-plot(t,aoa)
+plot(s,h)
+%plot(t(1:end-1),(diff(w)/dt))
 hold on
 
 
@@ -426,6 +429,10 @@ for ii = 1:numel(t)-1
   %recalculate taylor series linearizations every t_u seconds
   if t(ii)>=(t_last_update+t_update)
     %update the linearizations
+    spd = sqrt(x(2)^2+x(3)^2);
+    alpha_ind = findClosest1D(LT_alpha_ref,x(6));
+    vel_ind = findClosest1D(LT_vel_ref,spd);
+
     f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
 
     [trash,f0_ay,daydh,daydvy,daydvx,daydth,daydw,dayda] = linearize_ay(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
@@ -481,9 +488,17 @@ for ii = 1:numel(t)-1
   aoa(ii+1) = x_new(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
+  O = [cos(x_new(4)),sin(x_new(4))];
+  V = [x_new(3),x_new(2)];
+
+  x_new(6) = calculateAOA(O,V);
+
   x = x_new;
+
+  G(ii) = spd;
 
 endfor
 
-plot(t,aoa)
+plot(s,h)
+%plot(t(1:end-1),(diff(w)/dt))
 legend('Nonlinear','State-Space')
