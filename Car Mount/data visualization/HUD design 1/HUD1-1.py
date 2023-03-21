@@ -15,6 +15,12 @@ class Ui_Form(object):
         Form.resize(1510, 799)
         Form.setAutoFillBackground(False)
         Form.setStyleSheet("background-color: rgb(0, 0, 0);")
+        self.consoleMonitor = QtWidgets.QLabel(parent=Form)
+        self.consoleMonitor.setGeometry(QtCore.QRect(1200, 10, 301, 631))
+        self.consoleMonitor.setStyleSheet("background-color: rgb(218, 218, 218);")
+        self.consoleMonitor.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeading|QtCore.Qt.AlignmentFlag.AlignLeft|QtCore.Qt.AlignmentFlag.AlignTop)
+        self.consoleMonitor.setWordWrap(True)
+        self.consoleMonitor.setObjectName("consoleMonitor")
         self.pushButton = QtWidgets.QPushButton(parent=Form)
         self.pushButton.setGeometry(QtCore.QRect(1200, 650, 91, 41))
         self.pushButton.setStyleSheet("background-color: rgb(197, 197, 197);")
@@ -171,19 +177,6 @@ class Ui_Form(object):
         self.pushButton_4.setGeometry(QtCore.QRect(1440, 750, 61, 41))
         self.pushButton_4.setStyleSheet("background-color: rgb(197, 197, 197);")
         self.pushButton_4.setObjectName("pushButton_4")
-        self.textEdit = QtWidgets.QTextEdit(parent=Form)
-        self.textEdit.setGeometry(QtCore.QRect(1200, 50, 301, 591))
-        self.textEdit.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.textEdit.setReadOnly(True)
-        self.textEdit.setObjectName("textEdit")
-        self.label_3 = QtWidgets.QLabel(parent=Form)
-        self.label_3.setGeometry(QtCore.QRect(1210, 10, 281, 31))
-        font = QtGui.QFont()
-        font.setPointSize(12)
-        self.label_3.setFont(font)
-        self.label_3.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_3.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.label_3.setObjectName("label_3")
         self.widget = QtWidgets.QWidget(parent=Form)
         self.widget.setGeometry(QtCore.QRect(10, 10, 1181, 781))
         self.widget.setObjectName("widget")
@@ -223,14 +216,13 @@ class Ui_Form(object):
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
+        self.consoleMonitor.setText(_translate("Form", "TextLabel"))
         self.pushButton.setText(_translate("Form", "Refresh HUD"))
         self.pushButton_2.setText(_translate("Form", "Start/Stop collection"))
         self.pushButton_3.setText(_translate("Form", "Restart"))
         self.label.setText(_translate("Form", "Select COM port:"))
         self.label_2.setText(_translate("Form", "Set speed (m/s):"))
         self.pushButton_4.setText(_translate("Form", "Set"))
-        self.label_3.setText(_translate("Form", "Log messages"))
-        self.textEdit.setText(">> Lilypad Aerospace - Console Log")
 
     def setSpeed(self):
         self.spd_command = self.lineEdit.text() #get speed value as string
@@ -238,17 +230,10 @@ class Ui_Form(object):
         #send updated value to arduino for 7 segment display <WIP>
 
         #update console with new setting
-        spdStrList = ["New target speed: "+self.spd_command+" m/s ("+str(float(self.spd_command)*2.23694)[:5]+" MPH)"]
-        spdStr = ''.join(spdStrList)
-        print(spdStr)
-        self.updateLog(spdStr)
+        print(self.spd_command)
 
     def updateLog(self,upd):
-        log_msg_concat = [">> ",upd]
-        log_msg = ''.join(log_msg_concat)
-        self.textEdit.append(log_msg)
         
-
 
 
 if __name__ == "__main__":
