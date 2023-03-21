@@ -47,6 +47,7 @@ def validateSerialData(dataList):
 
 #===================================================================================================
 #step 2: Initialize Heads Up Display
+fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots()
 
 #step 3: Initialize CSV files
 epoch = str(time.time()) #epoch time appended to file names for uniquness
@@ -72,30 +73,30 @@ time.sleep(0.25) #give computer a moment to flush the port
 while True:
     #testing area
    
-    #Step 2: get data from serial port register
-    arduinoPort.flushInput()
-    arduinoPort.flushOutput()
-
-    time.sleep(0.01)
-
-    data = arduinoPort.readline()
-    data_str = str(data.decode("utf-8"))
-    vals = list(map(int, data_str.split(',')))
-
-    if validateSerialData(vals):
-        #if the data is valid save it
-        print(vals)
-
-        #write data to full CSV
-        with open(''.join(['data-full-',epoch,'.csv']),'a',newline='') as csv_file_full:
-            csv_full = csv.DictWriter(csv_file_full,fieldnames=["Time","Dynamic Press","Load 1","Load 2","Load 3"])
-
-            info = {"Time":vals[0],"Dynamic Press":vals[1],"Load 1":0,"Load 2":0,"Load 3":0}
-            csv_full.writerow(info)
-
-        #write data to steady state CSV
-        with open(''.join(['data-steady-',epoch,'.csv']),'a',newline='') as csv_file_steady:
-            csv_steady = csv.DictWriter(csv_file_steady,fieldnames=["Time","Airspeed","Lift Coeff","Drag Coeff","Moment Coeff"])
+##    #Step 2: get data from serial port register
+##    arduinoPort.flushInput()
+##    arduinoPort.flushOutput()
+##
+##    time.sleep(0.01)
+##
+##    data = arduinoPort.readline()
+##    data_str = str(data.decode("utf-8"))
+##    vals = list(map(int, data_str.split(',')))
+##
+##    if validateSerialData(vals):
+##        #if the data is valid save it
+##        print(vals)
+##
+##        #write data to full CSV
+##        with open(''.join(['data-full-',epoch,'.csv']),'a',newline='') as csv_file_full:
+##            csv_full = csv.DictWriter(csv_file_full,fieldnames=["Time","Dynamic Press","Load 1","Load 2","Load 3"])
+##
+##            info = {"Time":vals[0],"Dynamic Press":vals[1],"Load 1":vals[2],"Load 2":vals[3],"Load 3":vals[4]}
+##            csv_full.writerow(info)
+##
+##        #write data to steady state CSV
+##        with open(''.join(['data-steady-',epoch,'.csv']),'a',newline='') as csv_file_steady:
+##            csv_steady = csv.DictWriter(csv_file_steady,fieldnames=["Time","Airspeed","Lift Coeff","Drag Coeff","Moment Coeff"])
 
         
 
