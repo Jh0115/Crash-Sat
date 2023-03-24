@@ -185,40 +185,75 @@ class Ui_Form(object):
         self.label_3.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_3.setObjectName("label_3")
         self.widget = QtWidgets.QWidget(parent=Form)
-        self.widget.setGeometry(QtCore.QRect(10, 10, 1181, 781))
+        self.widget.setGeometry(QtCore.QRect(12, 10, 1171, 771))
         self.widget.setObjectName("widget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_6.setObjectName("verticalLayout_6")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.C_lift = QtWidgets.QGraphicsView(parent=self.widget)
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.label_8 = QtWidgets.QLabel(parent=self.widget)
+        self.label_8.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_8.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.label_8.setObjectName("label_8")
+        self.verticalLayout.addWidget(self.label_8)
+        self.C_lift = PlotWidget(parent=self.widget)
         self.C_lift.setObjectName("C_lift")
-        self.horizontalLayout_2.addWidget(self.C_lift)
-        self.C_drag = QtWidgets.QGraphicsView(parent=self.widget)
+        self.verticalLayout.addWidget(self.C_lift)
+        self.horizontalLayout_2.addLayout(self.verticalLayout)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label_6 = QtWidgets.QLabel(parent=self.widget)
+        self.label_6.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_6.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.label_6.setObjectName("label_6")
+        self.verticalLayout_2.addWidget(self.label_6)
+        self.C_drag = PlotWidget(parent=self.widget)
         self.C_drag.setObjectName("C_drag")
-        self.horizontalLayout_2.addWidget(self.C_drag)
-        self.C_moment = QtWidgets.QGraphicsView(parent=self.widget)
+        self.verticalLayout_2.addWidget(self.C_drag)
+        self.horizontalLayout_2.addLayout(self.verticalLayout_2)
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.label_7 = QtWidgets.QLabel(parent=self.widget)
+        self.label_7.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_7.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.label_7.setObjectName("label_7")
+        self.verticalLayout_3.addWidget(self.label_7)
+        self.C_moment = PlotWidget(parent=self.widget)
         self.C_moment.setObjectName("C_moment")
-        self.horizontalLayout_2.addWidget(self.C_moment)
-        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.verticalLayout_3.addWidget(self.C_moment)
+        self.horizontalLayout_2.addLayout(self.verticalLayout_3)
+        self.verticalLayout_6.addLayout(self.horizontalLayout_2)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.LoadCells = QtWidgets.QGraphicsView(parent=self.widget)
+        self.verticalLayout_4 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.label_4 = QtWidgets.QLabel(parent=self.widget)
+        self.label_4.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_4.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.label_4.setObjectName("label_4")
+        self.verticalLayout_4.addWidget(self.label_4)
+        self.LoadCells = PlotWidget(parent=self.widget)
         self.LoadCells.setObjectName("LoadCells")
-        self.horizontalLayout.addWidget(self.LoadCells)
-        self.DynPress = QtWidgets.QGraphicsView(parent=self.widget)
+        self.verticalLayout_4.addWidget(self.LoadCells)
+        self.horizontalLayout.addLayout(self.verticalLayout_4)
+        self.verticalLayout_5 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_5.setObjectName("verticalLayout_5")
+        self.label_5 = QtWidgets.QLabel(parent=self.widget)
+        self.label_5.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_5.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.label_5.setObjectName("label_5")
+        self.verticalLayout_5.addWidget(self.label_5)
+        self.DynPress = PlotWidget(parent=self.widget)
         self.DynPress.setObjectName("DynPress")
-        self.horizontalLayout.addWidget(self.DynPress)
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        self.verticalLayout.setStretch(0, 3)
-        self.verticalLayout.setStretch(1, 2)
+        self.verticalLayout_5.addWidget(self.DynPress)
+        self.horizontalLayout.addLayout(self.verticalLayout_5)
+        self.verticalLayout_6.addLayout(self.horizontalLayout)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
-
-        #-----------------custom parameters-----------------------
-        self.pushButton_4.clicked.connect(self.setSpeed)
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
@@ -229,26 +264,18 @@ class Ui_Form(object):
         self.label.setText(_translate("Form", "Select COM port:"))
         self.label_2.setText(_translate("Form", "Set speed (m/s):"))
         self.pushButton_4.setText(_translate("Form", "Set"))
+        self.textEdit.setHtml(_translate("Form", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">Console log</p></body></html>"))
         self.label_3.setText(_translate("Form", "Log messages"))
-        self.textEdit.setText(">> Lilypad Aerospace - Console Log")
-
-    def setSpeed(self):
-        self.spd_command = self.lineEdit.text() #get speed value as string
-
-        #send updated value to arduino for 7 segment display <WIP>
-
-        #update console with new setting
-        spdStrList = ["New target speed: "+self.spd_command+" m/s ("+str(float(self.spd_command)*2.23694)[:5]+" MPH)"]
-        spdStr = ''.join(spdStrList)
-        print(spdStr)
-        self.updateLog(spdStr)
-
-    def updateLog(self,upd):
-        log_msg_concat = [">> ",upd]
-        log_msg = ''.join(log_msg_concat)
-        self.textEdit.append(log_msg)
-        
-
+        self.label_8.setText(_translate("Form", "Lift Coefficient Polar"))
+        self.label_6.setText(_translate("Form", "Drag Coefficient Polar"))
+        self.label_7.setText(_translate("Form", "Moment Coefficient Polar"))
+        self.label_4.setText(_translate("Form", "Load Cell Outputs"))
+        self.label_5.setText(_translate("Form", "Dynamics Pressure"))
+from pyqtgraph import PlotWidget
 
 
 if __name__ == "__main__":

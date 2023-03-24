@@ -8,12 +8,10 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from pyqtgraph import PlotWidget
-from PyQt6.QtCore import QTimer
 import serial as ps
 import csv
 import time
 import numpy as np
-import math
 
 import serial.tools.list_ports as ps_ports
 port_silly = ps_ports.comports()
@@ -21,45 +19,7 @@ ports = []
 for ii in port_silly:
     ports.append(ii.device)
 
-global t
-global loadcell1
-global loadcell2
-global loadcell3
-global dynPress
-global F_L
-global F_D
-global F_M
-global x_off
-global y_off
-global d_ab
-
-x_off = 0.1
-y_off = 0
-d_ab = 0.75
-t = [0]
-loadcell1 = [0]
-loadcell2 = [0]
-loadcell3 = [0]
-dynPress = [0]
-F_L = []
-F_D = []
-F_M = []
-
-def dataClean(vals): #returns a true if data is apparently clean and usable. returns false otherwise
-
-    if len(vals)!=5:
-        return False
-    if len(t)>0:
-        if vals[0]<t[-1]:
-            return False
-    return True
-
-def loads2forces(R1,R2,R3):
-    #use linear equations to calculate lift drag and moment
-    L = R1*(-(math.sqrt(2)/2))+R2*(-(math.sqrt(2)/2))+R3*(-1)
-    D = R1*(math.sqrt(2)/2)+R2*(-(math.sqrt(2)/2))+R3*(0)
-    M = R1*(-(math.sqrt(2)/2)*(y_off-x_off))+R2*((math.sqrt(2)/2)*(y_off+x_off+d_ab))+R3*(x_off+d_ab)
-    return L,D,M 
+initialPort_flag = True
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -237,72 +197,34 @@ class Ui_Form(object):
         self.label_3.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.label_3.setObjectName("label_3")
         self.widget = QtWidgets.QWidget(parent=Form)
-        self.widget.setGeometry(QtCore.QRect(12, 10, 1171, 771))
+        self.widget.setGeometry(QtCore.QRect(10, 10, 1181, 781))
         self.widget.setObjectName("widget")
-        self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.widget)
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_6.setObjectName("verticalLayout_6")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.widget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.label_8 = QtWidgets.QLabel(parent=self.widget)
-        self.label_8.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_8.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.label_8.setObjectName("label_8")
-        self.verticalLayout.addWidget(self.label_8)
         self.C_lift = PlotWidget(parent=self.widget)
         self.C_lift.setObjectName("C_lift")
-        self.verticalLayout.addWidget(self.C_lift)
-        self.horizontalLayout_2.addLayout(self.verticalLayout)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.label_6 = QtWidgets.QLabel(parent=self.widget)
-        self.label_6.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_6.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.label_6.setObjectName("label_6")
-        self.verticalLayout_2.addWidget(self.label_6)
+        self.horizontalLayout_2.addWidget(self.C_lift)
         self.C_drag = PlotWidget(parent=self.widget)
         self.C_drag.setObjectName("C_drag")
-        self.verticalLayout_2.addWidget(self.C_drag)
-        self.horizontalLayout_2.addLayout(self.verticalLayout_2)
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.label_7 = QtWidgets.QLabel(parent=self.widget)
-        self.label_7.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_7.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.label_7.setObjectName("label_7")
-        self.verticalLayout_3.addWidget(self.label_7)
+        self.horizontalLayout_2.addWidget(self.C_drag)
         self.C_moment = PlotWidget(parent=self.widget)
         self.C_moment.setObjectName("C_moment")
-        self.verticalLayout_3.addWidget(self.C_moment)
-        self.horizontalLayout_2.addLayout(self.verticalLayout_3)
-        self.verticalLayout_6.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_2.addWidget(self.C_moment)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.label_4 = QtWidgets.QLabel(parent=self.widget)
-        self.label_4.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_4.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.label_4.setObjectName("label_4")
-        self.verticalLayout_4.addWidget(self.label_4)
         self.LoadCells = PlotWidget(parent=self.widget)
         self.LoadCells.setObjectName("LoadCells")
-        self.verticalLayout_4.addWidget(self.LoadCells)
-        self.horizontalLayout.addLayout(self.verticalLayout_4)
-        self.verticalLayout_5 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_5.setObjectName("verticalLayout_5")
-        self.label_5 = QtWidgets.QLabel(parent=self.widget)
-        self.label_5.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_5.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.label_5.setObjectName("label_5")
-        self.verticalLayout_5.addWidget(self.label_5)
+        self.horizontalLayout.addWidget(self.LoadCells)
         self.DynPress = PlotWidget(parent=self.widget)
         self.DynPress.setObjectName("DynPress")
-        self.verticalLayout_5.addWidget(self.DynPress)
-        self.horizontalLayout.addLayout(self.verticalLayout_5)
-        self.verticalLayout_6.addLayout(self.horizontalLayout)
+        self.horizontalLayout.addWidget(self.DynPress)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.verticalLayout.setStretch(0, 3)
+        self.verticalLayout.setStretch(1, 2)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -311,8 +233,6 @@ class Ui_Form(object):
         self.pushButton_4.clicked.connect(self.setSpeed)
         self.comboBox.addItems(ports)
         self.comboBox.currentTextChanged.connect(self.changeCOMport)
-
-        self.initialPort_flag = True
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
@@ -325,12 +245,6 @@ class Ui_Form(object):
         self.pushButton_4.setText(_translate("Form", "Set"))
         self.label_3.setText(_translate("Form", "Log messages"))
         self.textEdit.setText(">> Lilypad Aerospace - Console Log")
-        self.label_3.setText(_translate("Form", "Log messages"))
-        self.label_8.setText(_translate("Form", "Lift Coefficient Polar"))
-        self.label_6.setText(_translate("Form", "Drag Coefficient Polar"))
-        self.label_7.setText(_translate("Form", "Moment Coefficient Polar"))
-        self.label_4.setText(_translate("Form", "Load Cell Outputs"))
-        self.label_5.setText(_translate("Form", "Dynamics Pressure"))
 
     def setSpeed(self):
         self.spd_command = self.lineEdit.text() #get speed value as string
@@ -348,24 +262,15 @@ class Ui_Form(object):
         self.textEdit.append(log_msg)
 
     def changeCOMport(self):
-        #close old com port and reset the plots
-        if not self.initialPort_flag:
-            self.arduinoPort.close()
-
-        
-        self.LoadCells.clear()
-        self.DynPress.clear()
-        t.clear()
-        loadcell1.clear()
-        loadcell2.clear()
-        loadcell3.clear()
-        dynPress.clear()
+        #close old com port
+        if not initialPort_flag:
+            arduinoPort.close()
         
         #open new com port and flush the serial buffer
         newPort = self.comboBox.currentText()
-        self.arduinoPort = ps.Serial(newPort,57600)
-        self.arduinoPort.flushInput()
-        self.arduinoPort.flushOutput()
+        arduinoPort = ps.Serial(newPort,57600)
+        arduinoPort.flushInput()
+        arduinoPort.flushOutput()
 
         time.sleep(1)
 
@@ -373,68 +278,11 @@ class Ui_Form(object):
         updMsg = ["New serial port --> ",newPort]
         self.updateLog(''.join(updMsg))
 
-        #if this is the first port selected we begin plotting data
-        if self.initialPort_flag:
-            self.initialPort_flag = False
-            self.updatePlots()
-            
-
-    def updatePlots(self):
-        #check the buffer for actual data
-        if self.arduinoPort.inWaiting()==0: #if there are zero bytes in the buffer
-            #skip this update and reset the timer
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.updatePlots)
-            self.timer.start(1000)
-            #noDataUpd = ''.join([self.comboBox.currentText()," - no data detected"])
-            #self.updateLog(noDataUpd)
-            
-        else:
-            #grab the data
-            #self.data = self.arduinoPort.readline()
-            self.arduinoPort.flushInput()
-            self.arduinoPort.flushOutput()
-            time.sleep(0.02)
-            self.data = self.arduinoPort.readline()
-            
-            #print(self.data)
-            #self.updateLog("Update")
-
-            #convert the data
-            data_str = str(self.data.decode("utf-8"))
-            vals = list(map(int, data_str.split(',')))
-
-            if dataClean(vals): #if the data is not corrupted
-                
-                #save the data to csvs NEED TO DO STILL
-
-                #update the plots with new data
-                t.append(vals[0])
-                loadcell1.append(vals[1])
-                loadcell2.append(vals[2])
-                loadcell3.append(vals[3])
-                dynPress.append(vals[4])
-
-                L,D,M = loads2forces(vals[1],vals[2],vals[3])
-
-                F_L.append(L)
-                F_D.append(D)
-                F_M.append(M)
-                
-                self.C_lift.plot(t,F_L)
-                self.C_drag.plot(t,F_D)
-                self.C_moment.plot(t,F_M)
-                self.LoadCells.plot(t,loadcell1)
-                self.DynPress.plot(t,dynPress)
-
-            else: #otherwise notify the engineer but dont use the data
-                updMsg = ["Corrupted data from serial near t = ",str(t[-1])]
-                self.updateLog(''.join(updMsg))
-
-            #connect a timer to rerun the function
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.updatePlots)
-            self.timer.start(100)
+    def setupPlots(self):
+        #create titles and axis labels
+        x = np.random.normal(size=1000)
+        self.C_drag.plot(x,xlabel="Test")
+        
 
 
 if __name__ == "__main__":
@@ -445,6 +293,8 @@ if __name__ == "__main__":
     ui = Ui_Form()
     ui.setupUi(Form)
     Form.show()
+
+    ui.setupPlots()
     
     #allow user to select a COM port before anything starts
     ui.updateLog("Select the COM port to begin.")

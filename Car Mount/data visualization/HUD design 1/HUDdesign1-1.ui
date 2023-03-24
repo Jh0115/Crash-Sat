@@ -559,39 +559,131 @@ p, li { white-space: pre-wrap; }
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>12</x>
      <y>10</y>
-     <width>1181</width>
-     <height>781</height>
+     <width>1171</width>
+     <height>771</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout" stretch="3,2">
+   <layout class="QVBoxLayout" name="verticalLayout_6">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QGraphicsView" name="C_lift"/>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="label_8">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Lift Coefficient Polar</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="PlotWidget" name="C_lift"/>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QGraphicsView" name="C_drag"/>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="label_6">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Drag Coefficient Polar</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="PlotWidget" name="C_drag"/>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QGraphicsView" name="C_moment"/>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QLabel" name="label_7">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Moment Coefficient Polar</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="PlotWidget" name="C_moment"/>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QGraphicsView" name="LoadCells"/>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Load Cell Outputs</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="PlotWidget" name="LoadCells"/>
+        </item>
+       </layout>
       </item>
       <item>
-       <widget class="QGraphicsView" name="DynPress"/>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Dynamics Pressure</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="PlotWidget" name="DynPress"/>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
