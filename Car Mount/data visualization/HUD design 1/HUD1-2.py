@@ -14,6 +14,7 @@ import csv
 import time
 import numpy as np
 import math
+import os
 
 import serial.tools.list_ports as ps_ports
 port_silly = ps_ports.comports()
@@ -41,15 +42,15 @@ loadcell1 = [0]
 loadcell2 = [0]
 loadcell3 = [0]
 dynPress = [0]
-F_L = []
-F_D = []
-F_M = []
+C_L = []
+C_D = []
+C_M = []
 
 def dataClean(vals): #returns a true if data is apparently clean and usable. returns false otherwise
 
-    if len(vals)!=5:
+    if len(vals)!=5: #make sure there is appropriate number of data points
         return False
-    if len(t)>0:
+    if len(t)>0: #make sure the most recent time value is not below the current value
         if vals[0]<t[-1]:
             return False
     return True
@@ -311,6 +312,7 @@ class Ui_Form(object):
         self.pushButton_4.clicked.connect(self.setSpeed)
         self.comboBox.addItems(ports)
         self.comboBox.currentTextChanged.connect(self.changeCOMport)
+        self.pushButton_3.clicked.connect(self.restartHUD)
 
         self.initialPort_flag = True
 
@@ -355,11 +357,18 @@ class Ui_Form(object):
         
         self.LoadCells.clear()
         self.DynPress.clear()
+        self.C_lift.clear()
+        self.C_drag.clear()
+        self.C_moment.clear()
         t.clear()
         loadcell1.clear()
         loadcell2.clear()
         loadcell3.clear()
         dynPress.clear()
+        C_L.clear()
+        C_D.clear()
+        C_M.clear()
+        self.firstPlotFlag = True
         
         #open new com port and flush the serial buffer
         newPort = self.comboBox.currentText()
@@ -377,7 +386,27 @@ class Ui_Form(object):
         if self.initialPort_flag:
             self.initialPort_flag = False
             self.updatePlots()
-            
+
+    def getDataNoGarbage(self):
+        self.arduinoPort.flushInput()
+        self.arduinoPort.flushOutput() #the buffer gets flushed and it might cut off a data packet in the middle
+
+        time.sleep(0.02) #wait a moment for more data to arrive in buffer
+
+        do_flag = True
+        self.vals = [1]
+        n = 1
+        while do_flag or not dataClean(self.vals): #keep re-reading the buffer until we get a good line
+            self.data = self.arduinoPort.readline()
+            if len(self.data)>10:
+                if self.data[0]<58 and self.data[0]>47:
+                    data_str = str(self.data.decode("utf-8"))
+                    self.vals = list(map(int, data_str.split(',')))
+                else:
+                    self.vals = [1]
+            n = n+1
+            if do_flag:
+                do_flag = False
 
     def updatePlots(self):
         #check the buffer for actual data
@@ -390,42 +419,63 @@ class Ui_Form(object):
             #self.updateLog(noDataUpd)
             
         else:
-            #grab the data
-            #self.data = self.arduinoPort.readline()
-            self.arduinoPort.flushInput()
-            self.arduinoPort.flushOutput()
-            time.sleep(0.02)
-            self.data = self.arduinoPort.readline()
-            
-            #print(self.data)
-            #self.updateLog("Update")
+            self.getDataNoGarbage()
 
-            #convert the data
-            data_str = str(self.data.decode("utf-8"))
-            vals = list(map(int, data_str.split(',')))
-
-            if dataClean(vals): #if the data is not corrupted
+            if dataClean(self.vals): #if the data is not corrupted
                 
                 #save the data to csvs NEED TO DO STILL
+                #first save to full csv
 
-                #update the plots with new data
-                t.append(vals[0])
-                loadcell1.append(vals[1])
-                loadcell2.append(vals[2])
-                loadcell3.append(vals[3])
-                dynPress.append(vals[4])
+                #if the collection is live save to secondary file and update plots
+                if self.pushButton_2.isChecked():
 
-                L,D,M = loads2forces(vals[1],vals[2],vals[3])
+                    #update the plots with new data
+                    t.append(self.vals[0]/1000)
+                    loadcell1.append(self.vals[1])
+                    loadcell2.append(self.vals[2])
+                    loadcell3.append(self.vals[3])
+                    dynPress.append(self.vals[4])
 
-                F_L.append(L)
-                F_D.append(D)
-                F_M.append(M)
-                
-                self.C_lift.plot(t,F_L)
-                self.C_drag.plot(t,F_D)
-                self.C_moment.plot(t,F_M)
-                self.LoadCells.plot(t,loadcell1)
-                self.DynPress.plot(t,dynPress)
+                    L,D,M = loads2forces(self.vals[1],self.vals[2],self.vals[3])
+
+                    C_L.append(L) #totally not correct and needs correction later
+                    C_D.append(D)
+                    C_M.append(M)
+
+                    self.LoadCells.clear()
+                    self.DynPress.clear()
+                    self.C_lift.clear()
+                    self.C_drag.clear()
+                    self.C_moment.clear()
+                    
+                    self.C_lift.plot(t,C_L)
+                    self.C_drag.plot(t,C_D)
+                    self.C_moment.plot(t,C_M)
+                    self.LoadCells.plot(t,loadcell1,pen='r',name="Load Cell 1")
+                    self.LoadCells.plot(t,loadcell2,pen='b',name="Load Cell 2")
+                    self.LoadCells.plot(t,loadcell3,pen='g',name="Load Cell 3")
+                    self.DynPress.plot(t,dynPress)
+                    
+                    if self.firstPlotFlag:
+                        self.LoadCells.addLegend()
+                        self.firstPlotFlag = False
+                    
+                    self.C_lift.setXRange((t[-1]-10),t[-1])
+                    self.C_drag.setXRange((t[-1]-10),t[-1])
+                    self.C_moment.setXRange((t[-1]-10),t[-1])
+                    self.LoadCells.setXRange((t[-1]-10),t[-1])
+                    self.DynPress.setXRange((t[-1]-10),t[-1])
+
+    ##                if len(t)>10: #this section may not be necessary...
+    ##                    del(t[0])
+    ##                    del(loadcell1[0])
+    ##                    del(loadcell2[0])
+    ##                    del(loadcell3[0])
+    ##                    del(dynPress[0])
+    ##                    del(C_L[0])
+    ##                    del(C_D[0])
+    ##                    del(C_M[0])
+    ##                    print(t)
 
             else: #otherwise notify the engineer but dont use the data
                 updMsg = ["Corrupted data from serial near t = ",str(t[-1])]
@@ -436,15 +486,30 @@ class Ui_Form(object):
             self.timer.timeout.connect(self.updatePlots)
             self.timer.start(100)
 
+    def restartHUD(self):
+        #close the CSVs
+
+        #delete the variables
+
+        #execute the script
+        os.execv(__file__, sys.argv)
+
 
 if __name__ == "__main__":
     import sys
-    
+
+    with open('data_full.csv','w',newline='') as csv_file:
+        csv_full = csv.DictWriter(csv_file,fieldnames=["Parameter"])
+        csv_full.writeheader()
+        
     app = QtWidgets.QApplication(sys.argv)
     Form = QtWidgets.QWidget()
     ui = Ui_Form()
     ui.setupUi(Form)
     Form.show()
+
+    with open('data_full.csv','a',newline='') as csv_file:
+        csv_full = csv.DictWriter(csv_file,fieldnames=["parameter"])
     
     #allow user to select a COM port before anything starts
     ui.updateLog("Select the COM port to begin.")
