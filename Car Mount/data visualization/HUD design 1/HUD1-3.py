@@ -407,6 +407,7 @@ class Ui_Form(object):
         n = 1
         while do_flag or not dataClean(self.vals): #keep re-reading the buffer until we get a good line
             self.data = self.arduinoPort.readline()
+            #print(self.data)
             if len(self.data)>10:
                 if self.data[0]<58 and self.data[0]>47:
                     data_str = str(self.data.decode("utf-8"))
@@ -493,7 +494,7 @@ class Ui_Form(object):
             #connect a timer to rerun the function
             self.timer = QTimer()
             self.timer.timeout.connect(self.updatePlots)
-            self.timer.start(100)
+            self.timer.start(120)
 
     def restartHUD(self):
         #close the CSVs

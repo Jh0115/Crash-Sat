@@ -114,7 +114,7 @@ void loop() {
   }
 
   if (pres.Read()){
-    q = pres.pres_pa();
+    q = abs(pres.pres_pa());
     spd = sqrt(2*q/rho);
   }
   else {
@@ -135,7 +135,7 @@ void loop() {
   Serial.print(',');
   Serial.print(R3);
   Serial.print(',');
-  Serial.println(q);
+  Serial.println(spd);
 
   // feedback LED settings
   //step 1: Update averaged uncertainties
