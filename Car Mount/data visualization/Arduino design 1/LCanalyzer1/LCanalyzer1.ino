@@ -2,23 +2,23 @@
 #include "HX711.h"
 #include "ms4525do.h"
 
-const int LC1D = 2; //load cell data pins
-const int LC2D = 4;
-const int LC3D = 6;
+const int LC1D = 13; //load cell data pins
+const int LC2D = 4; 
+const int LC3D = 8;
 
-const int LC1K = 3; //load cell clock pins
-const int LC2K = 5;
-const int LC3K = 7;
+const int LC1K = 2; //load cell clock pins
+const int LC2K = 6;
+const int LC3K = 10;
 
 const int disp1D = 9; // 7 segment display 1 pins
-const int disp1K = 8;
+const int disp1K = 12;
 
-const int disp2D = 10; // 7 segment display 2 pins
-const int disp2K = 11;
+const int disp2D = 1; // 7 segment display 2 pins
+const int disp2K = 7;
 
-const int LED1 = 12; //LED pins
-const int LED2 = 13;
-const int LED3 = 1;
+const int LED1 = 3; //LED pins
+const int LED2 = 5;
+const int LED3 = 11;
 
 long R1;
 long R2;
@@ -81,7 +81,7 @@ void setup() {
   digitalWrite(13,LOW);
   
   Wire.begin();
-  Wire.setClock(400000);
+  //Wire.setClock(400000);
 
   pres.Config(&Wire, 0x28, 1.0f, -1.0f);
   pres.Begin();
@@ -91,6 +91,8 @@ void setup() {
 void loop() {
   // grab 3 measurements from 3 loadcells
   delay(100);
+
+  //Serial.print("test");
   
   if (scale1.is_ready()) { //Scale 1
     R1 = scale1.read();
