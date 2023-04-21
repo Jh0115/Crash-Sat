@@ -56,12 +56,19 @@ float R2_mu;
 float R3_mu;
 float q_mu;
 
-float R1_mu_goal = 0.2//0.0015; // load cell 1 uncertainty goal (0.15%)
-float R2_mu_goal = 0.2//0.0014; // load cell 2 uncertainty goal (0.14%)
-float R3_mu_goal = 0.2//0.0019; // load cell 3 uncertainty goal (0.19%)
-float q_mu_goal = 0.2//0.00065;  // dynamic pressure uncertainty goal (0.065%)
+float R1_mu_goal = 10;//0.0015; // load cell 1 uncertainty goal (0.15%)
+float R2_mu_goal = 10;//0.0014; // load cell 2 uncertainty goal (0.14%)
+float R3_mu_goal = 10;//0.0019; // load cell 3 uncertainty goal (0.19%)
+float q_mu_goal = 0.5;//0.00065;  // dynamic pressure uncertainty goal (0.065%)
 
 float N;
+bool outlierFlag = true;
+
+int recursiveOutlierCounter = 0;
+
+const int recursiveOutlierLimit = 20; //How many outliers to allow in a row before we assume a change in steady state
+const int minNbeforeStart = 10; //How many values do we collect before we start probing for outliers
+float outlierBand = 8; //How many standard deviations from the mean do we allow a data point before calling it an outlier
 
 HX711 scale1;
 HX711 scale2;
@@ -94,7 +101,7 @@ void setup() {
   pres.Config(&Wire, 0x28, 1.0f, -1.0f);
   pres.Begin();
 
-  verifyHardware();
+  verifyHardware(); //flash lights for startup sequence
 
 }
 
@@ -149,50 +156,105 @@ void loop() {
   Serial.print(',');
   Serial.println(spd);
 
-  // feedback LED settings
-  //step 1: Update averaged uncertainties
-  N = N+1;
-  R1_avg_curr = R1_avg_prev+(R1-R1_avg_prev)/N;
-  R2_avg_curr = R2_avg_prev+(R2-R2_avg_prev)/N;
-  R3_avg_curr = R3_avg_prev+(R3-R3_avg_prev)/N;
-  q_avg_curr = q_avg_prev+(q-q_avg_prev)/N;
+  // For debugging
+  // Serial.print(R1);
+  // Serial.print(",");
+  // Serial.print(R1_avg_curr);
+  // Serial.print(",");
+  // Serial.print(sqrt(R1_var_curr));
+  // Serial.print(",");
+  // Serial.println(N);
 
-  R1_var_curr = (((N-2)*R1_var_prev)+((R1-R1_avg_curr)*(R1-R1_avg_prev)))/(N-1);
-  R2_var_curr = (((N-2)*R2_var_prev)+((R2-R2_avg_curr)*(R2-R2_avg_prev)))/(N-1);
-  R3_var_curr = (((N-2)*R3_var_prev)+((R3-R3_avg_curr)*(R3-R3_avg_prev)))/(N-1);
-  q_var_curr = (((N-2)*q_var_prev)+((q-q_avg_curr)*(q-q_avg_prev)))/(N-1);
-  
-  R1_mu = 1.96*sqrt(R1_var_curr/N);
-  R2_mu = 1.96*sqrt(R2_var_curr/N);
-  R3_mu = 1.96*sqrt(R3_var_curr/N);
-  q_mu = 1.96*sqrt(q_var_curr/N);
-
-  Serial.print(R1_mu);
-
-  R1_var_prev = R1_var_curr;
-  R2_var_prev = R2_var_curr;
-  R3_var_prev = R3_var_curr;
-  q_var_prev = q_var_curr;
-
-  R1_avg_prev = R1_avg_curr;
-  R2_avg_prev = R2_avg_curr;
-  R3_avg_prev = R3_avg_curr;
-  q_avg_prev = q_avg_curr;
-
-  //step 2: Track progress
-    //red LED will always be on when collecting data
-  
-  if ((R1_mu<R1_mu_goal)||(R2_mu<R2_mu_goal)||(R3_mu<R3_mu_goal)||(q_mu<q_mu_goal)){
-    //light the LED yellow
-    setRGB(HIGH,HIGH,LOW);
-  }
-  if ((R1_mu<R1_mu_goal)&&(R2_mu<R2_mu_goal)&&(R3_mu<R3_mu_goal)&&(q_mu<q_mu_goal)){
-    //light the LED Green
-    setRGB(LOW,HIGH,LOW);
+  // Check if the value is an outlier, if so, do not update the statistical parameters
+  if (N>minNbeforeStart) { // We need to take at least a couple values before we can reasonably determine the average and std dev
+    if ((isOutlier(R1,R1_avg_curr,sqrt(R1_var_curr),N,outlierBand))||(isOutlier(R2,R2_avg_curr,sqrt(R2_var_curr),N,outlierBand))||(isOutlier(R3,R3_avg_curr,sqrt(R3_var_curr),N,outlierBand))||(isOutlier(q,q_avg_curr,sqrt(q_var_curr),N,outlierBand))) {
+      Serial.println("OUTLIER ALERT ALERT ALERT");
+      recursiveOutlierCounter +=1;
+      outlierFlag = false;
+    }
+    else {
+      outlierFlag = true;
+      recursiveOutlierCounter = 0;
+    }
   }
 
-  //Step 3: Red means lower 50%, yellow is upper 50%, green  is complete
+  if (outlierFlag) {
+    // feedback LED settings
+    //step 1: Update averaged uncertainties
+    N = N+1;
+    R1_avg_curr = R1_avg_prev+(R1-R1_avg_prev)/N;
+    R2_avg_curr = R2_avg_prev+(R2-R2_avg_prev)/N;
+    R3_avg_curr = R3_avg_prev+(R3-R3_avg_prev)/N;
+    q_avg_curr = q_avg_prev+(q-q_avg_prev)/N;
 
+    if (N>1) {
+      R1_var_curr = (((N-2)*R1_var_prev)+((R1-R1_avg_curr)*(R1-R1_avg_prev)))/(N-1);
+      R2_var_curr = (((N-2)*R2_var_prev)+((R2-R2_avg_curr)*(R2-R2_avg_prev)))/(N-1);
+      R3_var_curr = (((N-2)*R3_var_prev)+((R3-R3_avg_curr)*(R3-R3_avg_prev)))/(N-1);
+      q_var_curr = (((N-2)*q_var_prev)+((q-q_avg_curr)*(q-q_avg_prev)))/(N-1);
+      
+      R1_mu = 1.96*sqrt(R1_var_curr/N);
+      R2_mu = 1.96*sqrt(R2_var_curr/N);
+      R3_mu = 1.96*sqrt(R3_var_curr/N);
+      q_mu = 1.96*sqrt(q_var_curr/N);
+
+      // For debugging
+      // Serial.print(R1_mu);
+      // Serial.print(",");
+      // Serial.print(R2_mu);
+      // Serial.print(",");
+      // Serial.print(R3_mu);
+      // Serial.print(",");
+      // Serial.println(q_mu);
+    }
+
+    R1_var_prev = R1_var_curr;
+    R2_var_prev = R2_var_curr;
+    R3_var_prev = R3_var_curr;
+    q_var_prev = q_var_curr;
+
+    R1_avg_prev = R1_avg_curr;
+    R2_avg_prev = R2_avg_curr;
+    R3_avg_prev = R3_avg_curr;
+    q_avg_prev = q_avg_curr;
+
+    //step 2: Track progress
+      //red LED will always be on when collecting data
+    
+    if ((R1_mu<R1_mu_goal)&&(R2_mu<R2_mu_goal)&&(R3_mu<R3_mu_goal)&&(q_mu<q_mu_goal)){
+      //light the LED Green
+      setRGB(LOW,HIGH,LOW);
+    }
+    else if ((R1_mu<R1_mu_goal)||(R2_mu<R2_mu_goal)||(R3_mu<R3_mu_goal)||(q_mu<q_mu_goal)){
+      //light the LED yellow
+      setRGB(HIGH,HIGH,LOW);
+    }
+    else {
+      //light the LED red
+      setRGB(HIGH,LOW,LOW);
+    }
+  }
+
+  if (recursiveOutlierCounter>recursiveOutlierLimit) { //if we get enough outliers in a row its probably a change of state and we reset statistical parameters
+    Serial.println("RECURSIVE OUTLIERS DETECTED, RESETTING STATISTICAL PARAMETERS");    
+    setRGB(HIGH,LOW,LOW);
+
+    // reset uncertainty counter
+    R1_var_prev = 0;
+    R2_var_prev = 0;
+    R3_var_prev = 0;
+    q_var_prev = 0;
+
+    R1_avg_prev = R1;
+    R2_avg_prev = R2;
+    R3_avg_prev = R3;
+    q_avg_prev = q;
+
+    N = 0;
+    recursiveOutlierCounter = 0;
+    outlierFlag = true;
+
+  }
   
   // check for a new speed setting, update the displays, reset the uncertainty numbers
   if (Serial.available()) {
@@ -218,7 +280,7 @@ void loop() {
     R3_avg_prev = R3;
     q_avg_prev = q;
 
-    N = 1;
+    N = 0;
     
   }
 }
@@ -277,4 +339,14 @@ void setRGB(const int R, const int G, const int B) {
   digitalWrite(LED_R,!R);
   digitalWrite(LED_G,!G);
   digitalWrite(LED_B,!B);
+}
+
+bool isOutlier(long val, float avg, float sig, float N, float sig_limit) {
+
+  //sig_limit = 3;//1-(1/(2*N));
+
+  if (abs((val-avg)/sig)>sig_limit) { //if the value is more sigma away than the limit
+    return true; //it is an outlier
+  }
+  return false; //otherwiseit is not an outlier
 }
