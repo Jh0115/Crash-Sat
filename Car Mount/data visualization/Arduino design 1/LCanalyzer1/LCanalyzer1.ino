@@ -168,7 +168,7 @@ void loop() {
   // Check if the value is an outlier, if so, do not update the statistical parameters
   if (N>minNbeforeStart) { // We need to take at least a couple values before we can reasonably determine the average and std dev
     if ((isOutlier(R1,R1_avg_curr,sqrt(R1_var_curr),N,outlierBand))||(isOutlier(R2,R2_avg_curr,sqrt(R2_var_curr),N,outlierBand))||(isOutlier(R3,R3_avg_curr,sqrt(R3_var_curr),N,outlierBand))||(isOutlier(q,q_avg_curr,sqrt(q_var_curr),N,outlierBand))) {
-      Serial.println("OUTLIER ALERT ALERT ALERT");
+      //Serial.println("OUTLIER ALERT ALERT ALERT");
       recursiveOutlierCounter +=1;
       outlierFlag = false;
     }
