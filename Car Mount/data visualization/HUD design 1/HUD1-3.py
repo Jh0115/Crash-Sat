@@ -470,11 +470,30 @@ class Ui_Form(object):
                         self.LoadCells.addLegend()
                         self.firstPlotFlag = False
                     
-                    self.C_lift.setXRange((t[-1]-10),t[-1])
-                    self.C_drag.setXRange((t[-1]-10),t[-1])
-                    self.C_moment.setXRange((t[-1]-10),t[-1])
-                    self.LoadCells.setXRange((t[-1]-10),t[-1])
-                    self.DynPress.setXRange((t[-1]-10),t[-1])
+                    #self.C_lift.setXRange((t[-1]-10),t[-1])
+                    #self.C_drag.setXRange((t[-1]-10),t[-1])
+                    #self.C_moment.setXRange((t[-1]-10),t[-1])
+                    #self.LoadCells.setXRange((t[-1]-10),t[-1])
+                    #self.DynPress.setXRange((t[-1]-10),t[-1])
+
+                    self.C_lift.enableAutoRange(axis='y')
+                    self.C_lift.setAutoVisible(y=True)
+                    
+                    self.C_drag.enableAutoRange(axis='y')
+                    self.C_drag.setAutoVisible(y=True)
+                    
+                    self.C_moment.enableAutoRange(axis='y')
+                    self.C_moment.setAutoVisible(y=True)
+                    
+                    self.LoadCells.enableAutoRange(axis='y')
+                    self.LoadCells.setAutoVisible(y=True)
+                    
+                    self.DynPress.enableAutoRange(axis='y')
+                    self.DynPress.setAutoVisible(y=True)
+
+                    with open('data_full.csv','a',newline='') as csv_file:
+                        csv_full = csv.DictWriter(csv_file,fieldnames=[self.vals[0],self.vals[1],self.vals[2],self.vals[3],self.vals[4]])
+                        csv_full.writeheader()
 
     ##                if len(t)>10: #this section may not be necessary...
     ##                    del(t[0])
@@ -509,7 +528,7 @@ if __name__ == "__main__":
     import sys
 
     with open('data_full.csv','w',newline='') as csv_file:
-        csv_full = csv.DictWriter(csv_file,fieldnames=["Parameter"])
+        csv_full = csv.DictWriter(csv_file,fieldnames=["time","R1","R2","R3","q"])
         csv_full.writeheader()
         
     app = QtWidgets.QApplication(sys.argv)

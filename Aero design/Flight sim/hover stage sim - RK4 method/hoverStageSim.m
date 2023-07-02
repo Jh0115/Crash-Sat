@@ -58,37 +58,6 @@ for ii = 1:numel(t)-1
 
   energy(ii) = ac_struct.m*9.81*x(1)+0.5*ac_struct.m*spd*spd+0.5*ac_struct.MOI_y*x(5)*x(5);
 
-  %recalculate taylor series linearizations every t_u seconds
-##  if t(ii)>(t_last_update+t_update)
-##    %update the linearizations
-##    f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
-##
-##    [trash,f0_ay,daydh,daydvy,daydvx,daydth,daydw,dayda] = linearize_ay(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##    [trash,f0_ax,daxdh,daxdvy,daxdvx,daxdth,daxdw,daxda] = linearize_ax(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##
-##    f0_w = x(5); dwdh = 0; dwdvy = 0; dwdvx = 0; dwdth = 0; dwdw = 1; dwda = 0;
-##
-##    [trash,f0_alpha,dalphadh,dalphadvy,dalphadvx,dalphadth,dalphadw,dalphada] = linearize_alpha(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##    [trash,f0_daoa,ddaoadh,ddaoadvy,ddaoadvx,ddaoadth,ddaoadw,ddaoada] = linearize_aoa_dot(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##
-##    A = [dvydh,    dvydvy,    dvydvx,    dvydth,    dvydw,    dvyda;
-##         daydh,    daydvy,    daydvx,    daydth,    daydw,    dayda;
-##         daxdh,    daxdvy,    daxdvx,    daxdth,    daxdw,    daxda;
-##         dwdh,     dwdvy,     dwdvx,     dwdth,     dwdw,     dwda;
-##         dalphadh, dalphadvy, dalphadvx, dalphadth, dalphadw, dalphada;
-##         ddaoadh,  ddaoadvy,  ddaoadvx,  ddaoadth,  ddaoadw,  ddaoada]; %state matrix
-##
-##    B = [0,f0_vy;
-##         0,f0_ay;
-##         0,f0_ax;
-##         0,f0_w;
-##         0,f0_alpha;
-##         0,f0_daoa]; %input matrix (elevator and bias as columns)
-##
-##    t_last_update = t(ii);
-##
-##  endif
-
   %next decide what to do with control surface given controller and state model
   %no elevator controller for now
   elev = 0;
@@ -128,13 +97,12 @@ for ii = 1:numel(t)-1
   M = q_inf*Cm*ac_struct.Sa*ac_struct.c; %moment on craft in N-m
 
   %knowing the forces and moments calculate the accelerations
-  ax = (Dx+Lx)/ac_struct.m;
-  ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_vel_damp = w_damp*x(5)*x(5);
-  if x(5)>0
-    ang_vel_damp = -ang_vel_damp;
-  endif
-  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
+  ax_stab = (-FD/ac_struct.m)-9.81*sin(phi)+(x(5)*x(2));
+  ay_stab = (FL/ac_struct.m)-9.81*cos(phi)-(x(5)*x(3));
+
+  ax = ax_stab*cos(phi)-ay_stab*sin(phi); %nav axis x acceleration
+  ay = ax_stab*sin(phi)+ay_stab*cos(phi); %nav axis x acceleration
+  ang_accel = (M)/ac_struct.MOI_y;%+ang_vel_damp;
 
   %k1 vector
   k1 = [x(2);
@@ -191,13 +159,12 @@ for ii = 1:numel(t)-1
   M = q_inf*Cm*ac_struct.Sa*ac_struct.c; %moment on craft in N-m
 
   %knowing the forces and moments calculate the accelerations
-  ax = (Dx+Lx)/ac_struct.m;
-  ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_vel_damp = w_damp*x_k1(5)*x_k1(5);
-  if x_k1(5)>0
-    ang_vel_damp = -ang_vel_damp;
-  endif
-  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
+  ax_stab = (-FD/ac_struct.m)-9.81*sin(phi)+(x_k1(5)*x_k1(2));
+  ay_stab = (FL/ac_struct.m)-9.81*cos(phi)-(x_k1(5)*x_k1(3));
+
+  ax = ax_stab*cos(phi)-ay_stab*sin(phi); %nav axis x acceleration
+  ay = ax_stab*sin(phi)+ay_stab*cos(phi); %nav axis x acceleration
+  ang_accel = (M)/ac_struct.MOI_y;%+ang_vel_damp;
 
   %k1 vector
   k2 = [x(2);
@@ -255,13 +222,12 @@ for ii = 1:numel(t)-1
   M = q_inf*Cm*ac_struct.Sa*ac_struct.c; %moment on craft in N-m
 
   %knowing the forces and moments calculate the accelerations
-  ax = (Dx+Lx)/ac_struct.m;
-  ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_vel_damp = w_damp*x_k2(5)*x_k2(5);
-  if x_k2(5)>0
-    ang_vel_damp = -ang_vel_damp;
-  endif
-  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
+  ax_stab = (-FD/ac_struct.m)-9.81*sin(phi)+(x_k2(5)*x_k2(2));
+  ay_stab = (FL/ac_struct.m)-9.81*cos(phi)-(x_k2(5)*x_k2(3));
+
+  ax = ax_stab*cos(phi)-ay_stab*sin(phi); %nav axis x acceleration
+  ay = ax_stab*sin(phi)+ay_stab*cos(phi); %nav axis x acceleration
+  ang_accel = (M)/ac_struct.MOI_y;%+ang_vel_damp;
 
   %k1 vector
   k3 = [x(2);
@@ -320,13 +286,12 @@ for ii = 1:numel(t)-1
   M = q_inf*Cm*ac_struct.Sa*ac_struct.c; %moment on craft in N-m
 
   %knowing the forces and moments calculate the accelerations
-  ax = (Dx+Lx)/ac_struct.m;
-  ay = ((Dy+Ly)/ac_struct.m)-9.81;
-  ang_vel_damp = w_damp*x_k3(5)*x_k3(5);
-  if x_k3(5)>0
-    ang_vel_damp = -ang_vel_damp;
-  endif
-  ang_accel = (M)/ac_struct.MOI_y+ang_vel_damp;
+  ax_stab = (-FD/ac_struct.m)-9.81*sin(phi)+(x_k3(5)*x_k3(2));
+  ay_stab = (FL/ac_struct.m)-9.81*cos(phi)-(x_k3(5)*x_k3(3));
+
+  ax = ax_stab*cos(phi)-ay_stab*sin(phi); %nav axis x acceleration
+  ay = ax_stab*sin(phi)+ay_stab*cos(phi); %nav axis x acceleration
+  ang_accel = (M)/ac_struct.MOI_y;%+ang_vel_damp;
 
   %k1 vector
   k4 = [x(2);
@@ -363,6 +328,33 @@ endfor
 
 figure()
 plot(s,h)
+xlabel('s')
+ylabel('h')
+
+figure()
+plot(t,v(1,:))
+xlabel('t')
+ylabel('vx')
+
+figure()
+plot(t,v(2,:))
+xlabel('t')
+ylabel('vy')
+
+figure()
+plot(t,th)
+xlabel('t')
+ylabel('theta')
+
+figure()
+plot(t,aoa)
+xlabel('t')
+ylabel('aoa')
+
+figure()
+plot(t(1:end-1),energy)
+xlabel('t')
+ylabel('energy')
 
 ##    f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
 ##

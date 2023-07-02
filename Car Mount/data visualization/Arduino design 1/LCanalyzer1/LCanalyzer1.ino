@@ -68,7 +68,9 @@ int recursiveOutlierCounter = 0;
 
 const int recursiveOutlierLimit = 20; //How many outliers to allow in a row before we assume a change in steady state
 const int minNbeforeStart = 10; //How many values do we collect before we start probing for outliers
-float outlierBand = 8; //How many standard deviations from the mean do we allow a data point before calling it an outlier
+float outlierBand = 10; //How many standard deviations from the mean do we allow a data point before calling it an outlier
+
+int bright = 4; //Brightness of the displays
 
 HX711 scale1;
 HX711 scale2;
@@ -142,7 +144,7 @@ void loop() {
   }
 
   // grab data from pitot tube and update the display
-  dis_act.setBrightness(2);
+  dis_act.setBrightness(bright);
   dis_act.showNumberDecEx((spd*223.694),0b01000000,false,4,0);
   
   // print data to the Serial monitor
@@ -157,13 +159,13 @@ void loop() {
   Serial.println(spd);
 
   // For debugging
-  // Serial.print(R1);
-  // Serial.print(",");
-  // Serial.print(R1_avg_curr);
-  // Serial.print(",");
-  // Serial.print(sqrt(R1_var_curr));
-  // Serial.print(",");
-  // Serial.println(N);
+  Serial.print(R1_avg_curr);
+  Serial.print(",");
+  Serial.print(R2_avg_curr);
+  Serial.print(",");
+  Serial.print(R3_avg_curr);
+  Serial.print(",");
+  Serial.println(N);
 
   // Check if the value is an outlier, if so, do not update the statistical parameters
   if (N>minNbeforeStart) { // We need to take at least a couple values before we can reasonably determine the average and std dev
@@ -236,7 +238,7 @@ void loop() {
   }
 
   if (recursiveOutlierCounter>recursiveOutlierLimit) { //if we get enough outliers in a row its probably a change of state and we reset statistical parameters
-    Serial.println("RECURSIVE OUTLIERS DETECTED, RESETTING STATISTICAL PARAMETERS");    
+    //Serial.println("RECURSIVE OUTLIERS DETECTED, RESETTING STATISTICAL PARAMETERS");    
     setRGB(HIGH,LOW,LOW);
 
     // reset uncertainty counter
@@ -265,7 +267,7 @@ void loop() {
     Serial.flush();
 
     // update the display
-    dis_tar.setBrightness(2);
+    dis_tar.setBrightness(bright);
     dis_tar.showNumberDecEx((spdcmd*223.694),0b01000000,false,4,0);
     setRGB(HIGH,LOW,LOW);
 
@@ -293,30 +295,30 @@ void verifyHardware() {
   dis_act.clear();
   dis_tar.clear();
   delay(tdel);
-  dis_act.setBrightness(2);
+  dis_act.setBrightness(bright);
   dis_act.showNumberDecEx(8,0b11100000,false,1,0);
-  dis_tar.setBrightness(2);
+  dis_tar.setBrightness(bright);
   dis_tar.showNumberDecEx(8,0b11100000,false,1,0);
   delay(tdel);
   dis_act.clear();
   dis_tar.clear();
-  dis_act.setBrightness(2);
+  dis_act.setBrightness(bright);
   dis_act.showNumberDecEx(8,0b11100000,false,2,0);
-  dis_tar.setBrightness(2);
+  dis_tar.setBrightness(bright);
   dis_tar.showNumberDecEx(8,0b11100000,false,2,0);
   delay(tdel);
   dis_act.clear();
   dis_tar.clear();
-  dis_act.setBrightness(2);
+  dis_act.setBrightness(bright);
   dis_act.showNumberDecEx(8,0b11100000,false,3,0);
-  dis_tar.setBrightness(2);
+  dis_tar.setBrightness(bright);
   dis_tar.showNumberDecEx(8,0b11100000,false,3,0);
   delay(tdel);
   dis_act.clear();
   dis_tar.clear();
-  dis_act.setBrightness(2);
+  dis_act.setBrightness(bright);
   dis_act.showNumberDecEx(8,0b11100000,false,4,0);
-  dis_tar.setBrightness(2);
+  dis_tar.setBrightness(bright);
   dis_tar.showNumberDecEx(8,0b11100000,false,4,0);
   delay(tdel);
   dis_act.clear();
