@@ -6,7 +6,7 @@ clc
 
 %initial condition
 vy0 = 0; %initial m/s
-vx0 = 100;
+vx0 = 40;
 h0 = 20; %initial meters
 th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
@@ -16,7 +16,7 @@ mu = 0.0000181; %air viscocity in kg/(m-s)
 w_damp = 0.1; %angular velocity dampener constant
 
 dt = 0.01;
-t_end = 60;
+t_end = 20;
 t = 0:dt:t_end;
 v = zeros(2,numel(t));
 h = zeros(1,numel(t));
@@ -324,6 +324,18 @@ for ii = 1:numel(t)-1
   aoa(ii+1) = x(6);
   s(ii+1) = s(ii)+v(1,ii)*dt;
 
+  %update printed data
+  data(ii,1) = ii;
+  data(ii,2) = t(ii);
+  data(ii,3) = s(ii);
+  data(ii,4) = h(ii);
+  data(ii,5) = 0;
+  data(ii,6) = th(ii);
+
+  if x(1)<0
+    break
+  endif
+
 endfor
 
 figure()
@@ -331,51 +343,48 @@ plot(s,h)
 xlabel('s')
 ylabel('h')
 
-figure()
-plot(t,v(1,:))
-xlabel('t')
-ylabel('vx')
-
-figure()
-plot(t,v(2,:))
-xlabel('t')
-ylabel('vy')
-
-figure()
-plot(t,th)
-xlabel('t')
-ylabel('theta')
-
-figure()
-plot(t,aoa)
-xlabel('t')
-ylabel('aoa')
-
-figure()
-plot(t(1:end-1),energy)
-xlabel('t')
-ylabel('energy')
-
-##    f0_vy = x(2); dvydh = 0; dvydvy = 1; dvydvx = 0; dvydth = 0; dvydw = 0; dvyda = 0;
+##figure()
+##plot(t,v(1,:))
+##xlabel('t')
+##ylabel('vx')
 ##
-##    [trash,f0_ay,daydh,daydvy,daydvx,daydth,daydw,dayda] = linearize_ay(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##    [trash,f0_ax,daxdh,daxdvy,daxdvx,daxdth,daxdw,daxda] = linearize_ax(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+##figure()
+##plot(t,v(2,:))
+##xlabel('t')
+##ylabel('vy')
 ##
-##    f0_w = x(5); dwdh = 0; dwdvy = 0; dwdvx = 0; dwdth = 0; dwdw = 1; dwda = 0;
+##figure()
+##plot(t,th)
+##xlabel('t')
+##ylabel('theta')
 ##
-##    [trash,f0_alpha,dalphadh,dalphadvy,dalphadvx,dalphadth,dalphadw,dalphada] = linearize_alpha(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
-##    [trash,f0_daoa,ddaoadh,ddaoadvy,ddaoadvx,ddaoadth,ddaoadw,ddaoada] = linearize_aoa_dot(ac_struct,alpha_ind,vel_ind,x(1),x(2),x(3),x(4),x(5),x(6),rho,elev);
+##figure()
+##plot(t,aoa)
+##xlabel('t')
+##ylabel('aoa')
 ##
-##    A = [dvydh,    dvydvy,    dvydvx,    dvydth,    dvydw,    dvyda;
-##         daydh,    daydvy,    daydvx,    daydth,    daydw,    dayda;
-##         daxdh,    daxdvy,    daxdvx,    daxdth,    daxdw,    daxda;
-##         dwdh,     dwdvy,     dwdvx,     dwdth,     dwdw,     dwda;
-##         dalphadh, dalphadvy, dalphadvx, dalphadth, dalphadw, dalphada;
-##         ddaoadh,  ddaoadvy,  ddaoadvx,  ddaoadth,  ddaoadw,  ddaoada]; %state matrix
-##
-##    B = [0,f0_vy;
-##         0,f0_ay;
-##         0,f0_ax;
-##         0,f0_w;
-##         0,f0_alpha;
-##         0,f0_daoa]; %input matrix (elevator and bias as columns)
+##figure()
+##plot(t(1:end-1),energy)
+##xlabel('t')
+##ylabel('energy')
+
+%% Export text file data for the visualization and title it with a unique name based on timestamp
+char_time = ctime(time()); %this will be part of the filename title
+n = 1;
+for ii = 1:numel(char_time)
+  c = char_time(ii);
+  if c~=":" && c~=" " && c~="\n"
+    filename(n) = c;
+    n = n+1;
+  endif
+
+endfor
+
+filename = strcat("simDataPos/simPosData_",filename,".txt");
+
+
+ind_arr = 1:numel(t);
+k = zeros(1,numel(t));
+
+dlmwrite(filename,data)
+
