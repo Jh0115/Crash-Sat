@@ -5,9 +5,9 @@ clc
 %% hover sim state space model
 
 %initial condition
-vy0 = 0; %initial m/s
-vx0 = 40;
-h0 = 20; %initial meters
+vy0 = 5; %initial m/s
+vx0 = 50;
+h0 = 10; %initial meters
 th0 = atan2(vy0,vx0)+deg2rad(3);%deg2rad(0); %initial orientation
 w0 = deg2rad(0); %initial angular velocity
 t_update = 2; %Seconds
@@ -330,7 +330,7 @@ for ii = 1:numel(t)-1
   data(ii,3) = s(ii);
   data(ii,4) = h(ii);
   data(ii,5) = 0;
-  data(ii,6) = th(ii);
+  data(ii,6) = rad2deg(th(ii));
 
   if x(1)<0
     break
